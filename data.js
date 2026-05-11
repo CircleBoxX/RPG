@@ -7,329 +7,1410 @@
 //  DATA — built-in adventure
 // ═══════════════════════════════════════════════════════════
 const BUILTIN_ADVENTURE = {
-  meta: {
-    id: "builtin-1",
-    title: "A Espada do Destino",
-    author: "Crônicas do Reino",
-    desc: "Você é um jovem escudeiro quando uma lenda antiga ressurge. Escolhas difíceis moldarão seu destino e o do reino.",
-    genre: "Fantasia Medieval",
-    icon: "⚔️",
-    startNode: "start"
+  {
+  "meta": {
+    "id": "maldição-aetherion-001",
+    "title": "A Maldição de Aetherion",
+    "author": "Crônicas do Reino",
+    "desc": "Uma profecia antiga ressurge quando a cidade de Valdris começa a apodrecer por dentro. Um herói improvável parte em busca da Pedra de Aetherion — mas o caminho está cheio de armadilhas, aliados inesperados e escolhas impossíveis.",
+    "genre": "Fantasia Medieval",
+    "icon": "🔮",
+    "startNode": "prologo"
   },
-  nodes: {
-    "start": {
-      id: "start",
-      title: "O Chamado da Floresta",
-      text: "O sol mal desponta quando o mensageiro real galopa pelo portão da aldeia. Seu cavalo espuma, os olhos arregalados de pavor.\n\n«A Espada de Aldric foi roubada do Templo das Pedras!» — grita ele antes de desmaiar.\n\n{{nome}} é um escudeiro sem mestre, dormindo no celeiro da estalagem. Os aldeões murmuram com medo. Dizem que sem a espada, o dragão ancestral Vorthaan despertará em sete dias.",
-      choices: [
-        { text: "Oferecer-se para ir ao Templo das Pedras investigar", next: "temple" },
-        { text: "Procurar o ancião Mirdan, que conhece a lenda da espada", next: "elder" },
-        { text: "Ignorar tudo e cuidar de sua própria vida", next: "ignore" }
+
+  "nodes": {
+
+    "prologo": {
+      "id": "prologo",
+      "title": "A Cidade que Apodrece",
+      "text": "Valdris já foi a joia do reino — torres brancas, mercados ruidosos, fontes cantantes nas praças. Hoje, {{nome}}, você a encontra coberta de uma névoa negra que não dissipa nem ao meio-dia.\n\nCrianças não brincam nas ruas. Os mercadores fecharam as bancas. Um cheiro de prata queimada impregna tudo.\n\nVocê chegou até aqui seguindo rumores de trabalho e ouro. Em vez disso, encontrou uma cidade agonizante — e um bilhete enfiado sob a porta da estalagem:\n\n*«Procure a Arquivista Solenne, na Torre das Letras. Venha antes do anoitecer. — Um Amigo»*",
+      "dialogues": [
+        {
+          "speaker": "",
+          "narrator": true,
+          "text": "A névoa negra pulsa levemente, como se respirasse. Algo nela observa você."
+        },
+        {
+          "speaker": "Mesoneiro",
+          "portrait": "🧔",
+          "text": "Não fique na rua depois que o sino da torre tocar oito. Ninguém volta das ruas depois disso. Ninguém."
+        }
+      ],
+      "choices": [
+        { "text": "Ir à Torre das Letras procurar a Arquivista Solenne", "next": "torre_letras", "points": 10 },
+        { "text": "Investigar a névoa negra pelas ruas antes", "next": "ruas_nevoa", "points": 5 },
+        { "text": "Perguntar ao mesoneiro o que está acontecendo", "next": "mesoneiro_info" }
       ]
     },
-    "temple": {
-      id: "temple",
-      title: "O Templo das Pedras Negras",
-      text: "A jornada até o templo leva duas horas pela floresta densa. Ao chegar, você encontra rastros de botas militares na lama... e o cheiro de enxofre no ar.\n\nDentro do santuário vazio, uma única pena negra repousa sobre o altar. Não é de nenhuma ave que você conhece.\n\nEnquanto examina o altar, ouve vozes ao fundo — dois guardas com armaduras sem emblema.",
-      choices: [
-        { text: "Espiar os guardas para ouvir sua conversa", next: "spy" },
-        { text: "Enfrentá-los diretamente e exigir respostas", next: "confront" },
-        { text: "Fugir e levar a pena negra ao ancião Mirdan", next: "elder_with_feather" }
+
+    "mesoneiro_info": {
+      "id": "mesoneiro_info",
+      "title": "A Boca do Povo",
+      "text": "O mesoneiro, chamado Bran, baixa a voz como se as paredes tivessem ouvidos.\n\n«Tudo começou há doze dias. Uma chuva de cinzas caiu por uma noite inteira e quando o sol saiu, a névoa já estava aqui. Primeiro foram os ratos — morrendo aos montes. Depois, dois guardas desapareceram na Praça da Âncora.»\n\nEle serve um copo de hidromél com mão trêmula.\n\n«A Arquivista Solenne diz que encontrou algo nos arquivos antigos. Uma profecia, ou assim ela chama. Os conselheiros do Lorde a mandaram calar, mas ela não calou. Daí a mandaram embora da câmara — mas ela ainda está na torre, estudando.»\n\n«Se alguém sabe o que é essa maldição», murmura ele, «é ela.»",
+      "dialogues": [
+        {
+          "speaker": "Bran",
+          "portrait": "🧔",
+          "text": "O Lorde Caldwin disse que é só uma praga natural, que vai passar. Mas eu vi os olhos dele quando disse isso. Medo, aventureiro. Medo puro."
+        }
+      ],
+      "choices": [
+        { "text": "Ir à Torre das Letras agora mesmo", "next": "torre_letras", "points": 10 },
+        { "text": "Pedir informações sobre o Lorde Caldwin primeiro", "next": "caldwin_rumor" }
       ]
     },
-    "elder": {
-      id: "elder",
-      title: "O Ancião Mirdan",
-      text: "Mirdan vive numa cabana cheia de pergaminhos e fumaça de ervas. Ele escuta sua história com olhos fechados.\n\n«A Espada de Aldric só pode ser roubada por alguém que conhece o caminho secreto», murmura. «Apenas três pessoas sabiam: eu, o Sumo Sacerdote... e o Conde Harvan.»\n\nSeu olhar fica pesado. «O Conde partiu para o norte ontem à noite.»",
-      choices: [
-        { text: "Ir ao norte perseguir o Conde", next: "north_road" },
-        { text: "Perguntar ao ancião se ele pode ajudar de outra forma", next: "elder_help" },
-        { text: "Ir ao templo investigar primeiro", next: "temple" }
+
+    "caldwin_rumor": {
+      "id": "caldwin_rumor",
+      "title": "O Lorde das Sombras",
+      "text": "Bran hesita, olha para a porta, então se inclina.\n\n«Há seis meses, Caldwin fez uma viagem ao norte — às Ruínas de Aetherion. Voltou diferente. Mais pálido, mais seco. Olhos que às vezes parecem refletir a névoa mesmo quando está dentro de casa.»\n\n«E ninguém mais foi autorizado a entrar no porão do castelo desde então.»\n\nAs informações se encaixam como peças de um puzzle sinistro.",
+      "choices": [
+        { "text": "Ir à Torre das Letras — as peças estão se encaixando", "next": "torre_letras", "points": 15 },
+        { "text": "Tentar se infiltrar no castelo antes de qualquer coisa", "next": "castelo_tentativa_precoce" }
       ]
     },
-    "ignore": {
-      id: "ignore",
-      title: "A Decisão do Covarde",
-      text: "Você empacota seus poucos pertences e parte pela estrada do sul, longe de problemas que não são seus.\n\nTrês dias depois, no horizonte, uma coluna de fogo sobe ao céu. O rugido de Vorthaan sacode a terra sob seus pés.\n\nVocê sobreviveu. Mas o reino não.",
-      choices: [],
-      ending: { type: "defeat", title: "O Fugitivo" }
-    },
-    "spy": {
-      id: "spy",
-      title: "Segredos nas Sombras",
-      text: "Você se esconde atrás de uma coluna rachada. Os guardas falam baixo:\n\n«O Conde quer a espada entregue no Porto das Garças ao amanhecer de quinta. O navio já está esperando.»\n\n«E o dragão?» — pergunta o mais novo, nervoso.\n\n«O Conde diz que isso é lenda de velhos», ri o outro. «O ouro é real.»\n\nVocê tem informações valiosas. Mas eles estão se aproximando.",
-      choices: [
-        { text: "Recuar silenciosamente e partir para o Porto das Garças", next: "harbor" },
-        { text: "Tentar prender os guardas sozinho", next: "fight_guards" }
+
+    "castelo_tentativa_precoce": {
+      "id": "castelo_tentativa_precoce",
+      "title": "Imprudência",
+      "text": "Você tenta chegar ao castelo de Caldwin sem informações suficientes. As muralhas têm guardas posicionados a cada dez metros — muito mais do que o normal para uma cidade pequena.\n\nUm dos guardas te reconhece como recém-chegado e ordena que você se explique. Sem argumentos convincentes, você é escoltado de volta às ruas com um aviso para não tentar novamente.\n\nVocê perdeu tempo precioso. A névoa parece um pouco mais densa agora.",
+      "choices": [
+        { "text": "Ir à Torre das Letras, finalmente", "next": "torre_letras", "vida": -1 }
       ]
     },
-    "confront": {
-      id: "confront",
-      title: "O Preço da Coragem",
-      text: "Você ergue a voz. Os guardas se viram — há dois deles, armados e treinados.\n\nA luta é rápida e brutal. Você é jovem e rápido, mas eles são experientes. Um golpe no crânio te deixa caindo.\n\nQuando acorda, a noite caiu. Os guardas se foram, e você está sozinho no templo escuro com um hematoma enorme e nenhuma informação.",
-      choices: [
-        { text: "Voltar à aldeia e contar o que aconteceu", next: "village_report" },
-        { text: "Procurar rastros deles pela floresta", next: "track_guards" }
+
+    "ruas_nevoa": {
+      "id": "ruas_nevoa",
+      "title": "Mergulho na Escuridão",
+      "text": "As ruas de Valdris à luz do dia já são opressivas. A névoa cobre tudo acima dos joelhos, silenciosa e fria.\n\nVocê caminha dois quarteirões quando vê algo que congela seu sangue: uma figura humana completamente estática no meio da rua, de pé, de olhos abertos — mas sem respirar. Uma criança de uns dez anos.\n\nEla não está morta. Mas também não está viva da forma que você conhece. É como se o tempo dela tivesse parado.",
+      "dialogues": [
+        {
+          "speaker": "",
+          "narrator": true,
+          "text": "A névoa pulsa ao redor da criança como um coração negro."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Tentar tirar a criança dali com força",
+          "attrCheck": "forca",
+          "difficulty": 5,
+          "next": "crianca_salva",
+          "nextFail": "crianca_falha",
+          "pointsSuccess": 50,
+          "pointsFail": -10,
+          "vidaFail": -1,
+          "sanidadeSuccess": 1,
+          "sanidadeFail": -1
+        },
+        { "text": "Observar de longe antes de agir", "next": "crianca_observar" },
+        { "text": "Sair dali e ir direto à Torre das Letras", "next": "torre_letras", "sanidade": -1 }
       ]
     },
-    "elder_with_feather": {
-      id: "elder_with_feather",
-      title: "A Pena Negra",
-      text: "Mirdan examina a pena com dedos trêmulos. Sua face empalidece.\n\n«Isso... isso é pena de um Corvo das Sombras. Aves que só existem além das Montanhas Geladas.» Ele para. «Só o Conde Harvan realizou essa expedição há vinte anos.\»\n\nO ancião abre um baú enferrujado e retira um mapa. «O Conde tem um esconderijo no Porto das Garças. Você precisa ir antes do amanhecer de quinta-feira.»",
-      choices: [
-        { text: "Partir imediatamente para o Porto das Garças", next: "harbor" },
-        { text: "Pedir que Mirdan venha junto", next: "harbor_with_elder" }
+
+    "crianca_salva": {
+      "id": "crianca_salva",
+      "title": "Arrancada das Sombras",
+      "text": "Com um esforço brutal, você arranca a menina da névoa. Ela desperta como de um pesadelo — ofegante, chorando, sem saber onde está.\n\nVocê a carrega até a estalagem de Bran. No caminho, ela sussurra entre soluços:\n\n«Havia uma voz na névoa. Dizia meu nome. Dizia para eu não me mover, que logo estaria em paz.»\n\nBran cuida dela. Você ganhou a gratidão de um pai aliviado — e uma informação: ela estava próxima à entrada das catacumbas sob a Praça da Âncora.",
+      "choices": [
+        { "text": "Ir à Torre das Letras com essa nova informação", "next": "torre_letras", "points": 60, "tagEffects": [{ "tag": "salvou_crianca", "value": true }] },
+        { "text": "Investigar as catacumbas imediatamente", "next": "catacumbas_prematura" }
       ]
     },
-    "north_road": {
-      id: "north_road",
-      title: "A Estrada do Norte",
-      text: "Você segue as trilhas de cascos na estrada norte. Ao entardecer, alcança uma pousada onde o mesoneiro sussurra que um nobre rico parou ali na noite anterior — apressado, carregando um embrulho longo.",
-      choices: [
-        { text: "Continuar norte até o Porto das Garças", next: "harbor" },
-        { text: "Voltar e buscar reforços", next: "village_report" }
+
+    "crianca_falha": {
+      "id": "crianca_falha",
+      "title": "Repelido",
+      "text": "A névoa ao redor da criança resistiu como uma parede de vidro. Você foi lançado para trás, aterrissando violentamente no calçamento.\n\nQuando você se levanta, a criança sumiu. A névoa fechou-se sobre o lugar onde ela estava.\n\nSua mão queima onde tocou a névoa. Algo nela não é natural — é hostil.",
+      "choices": [
+        { "text": "Ir à Torre das Letras com urgência", "next": "torre_letras", "sanidade": -1 }
       ]
     },
-    "harbor": {
-      id: "harbor",
-      title: "O Porto das Garças",
-      text: "O porto está silencioso antes do amanhecer. Lanternas balançam nos mastros de um navio de bandeira neutra.\n\nVocê avista o Conde Harvan na doca — gordo, de capa escarlate, conversando com um homem de traços orientais que segura um baú.\n\nA Espada de Aldric está sendo transferida. Você tem minutos.",
-      choices: [
-        { text: "Chamar a guarda do porto a plenos pulmões", next: "call_guards" },
-        { text: "Roubar a espada durante a confusão de uma distração", next: "steal_back" },
-        { text: "Confrontar o Conde publicamente como testemunha", next: "confront_count" }
+
+    "crianca_observar": {
+      "id": "crianca_observar",
+      "title": "O Olho que Tudo Vê",
+      "text": "Você observa por minutos. A névoa ao redor da criança pulsa em intervalos regulares — exatamente como uma respiração. E quando uma rajada de vento ocasional dissipa um pouco a névoa, você vê símbolos gravados no calçamento abaixo dela.\n\nSímbolos antigos. Runas de aprisionamento.\n\nAlguém as colocou ali de propósito.",
+      "choices": [
+        {
+          "text": "Tentar decifrar as runas",
+          "attrCheck": "inteligencia",
+          "difficulty": 6,
+          "next": "runas_decifradas",
+          "nextFail": "runas_falha",
+          "pointsSuccess": 40
+        },
+        { "text": "Ir à Torre das Letras — a Arquivista pode saber sobre essas runas", "next": "torre_letras", "tagEffects": [{ "tag": "viu_runas", "value": true }] }
       ]
     },
-    "harbor_with_elder": {
-      id: "harbor_with_elder",
-      title: "Dois contra o Destino",
-      text: "Mirdan concorda, apoiando-se em seu cajado. Na estrada, ele conta histórias sobre a forja da espada — como o ferreiro sagrado usou o último raio de uma tempestade eterna.\n\nNo porto, sua chegada com um ancião cria uma distração perfeita. O Conde não espera testemunhas.",
-      choices: [
-        { text: "Usar a distração para chamar a guarda do porto", next: "call_guards" },
-        { text: "Mirdan distrai o Conde enquanto você pega a espada", next: "steal_back" }
+
+    "runas_decifradas": {
+      "id": "runas_decifradas",
+      "title": "Língua Morta",
+      "text": "As runas são do Velho Eldric — uma língua ritual proibida há três séculos. Você consegue ler fragmentos:\n\n*«...por cada alma presa, o Núcleo ganha um dia... sete almas, a Pedra acorda...»*\n\nSeu sangue esfria. Não é uma praga. É um ritual. E está progredindo.",
+      "choices": [
+        { "text": "Correr para a Torre das Letras", "next": "torre_letras", "points": 50, "tagEffects": [{ "tag": "conhece_ritual", "value": true }, { "tag": "viu_runas", "value": true }] }
       ]
     },
-    "call_guards": {
-      id: "call_guards",
-      title: "A Lei do Reino",
-      text: "Sua voz corta o silêncio do porto. Guardas acordam, tochas se acendem.\n\nO Conde tenta negar, mas você descreve com precisão o embrulho, o navio e o comprador. O ancião Mirdan — se ele foi com você — confirma tudo.\n\nO Conde Harvan é preso. A espada é recuperada e devolvida ao Templo antes do despertar de Vorthaan.\n\nO Rei convoca você à corte. Uma nova era começa.",
-      choices: [],
-      ending: { type: "victory", title: "O Herói da Lei" }
-    },
-    "steal_back": {
-      id: "steal_back",
-      title: "Das Sombras para a Luz",
-      text: "Com agilidade de gato, você se infiltra na troca. Num momento de distração, seus dedos fecham em torno do cabo da espada.\n\nA lâmina pulsa com calor dourado ao toque — como se reconhecesse um portador digno.\n\nVocê foge pela escuridão do porto. O Conde grita, mas sem provas, não pode acusar ninguém.\n\nAo amanhecer, a Espada de Aldric repousa novamente no altar. O dragão Vorthaan dorme por mais um século.",
-      choices: [],
-      ending: { type: "victory", title: "O Ladrão Justo" }
-    },
-    "confront_count": {
-      id: "confront_count",
-      title: "Face a Face",
-      text: "Você caminha em direção ao Conde com passos firmes.\n\n«Em nome do reino, Conde Harvan — o que está nesse embrulho?»\n\nO Conde ri frio. Mas o comprador oriental fica nervoso. E quando guardas do porto acordam com o alvoroço, o Conde comete um erro fatal: ordena a fuga.\n\nFugir é confessar. Os guardas prendem todos. A espada volta ao templo.\n\nVocê não ganhou nada material — mas seu nome ecoa pelas tavernas como o escudeiro que encarou um Conde.",
-      choices: [],
-      ending: { type: "victory", title: "O Destemido" }
-    },
-    "fight_guards": {
-      id: "fight_guards",
-      title: "Superado",
-      text: "Dois contra um. Você luta com coragem, mas eles são veteranos.\n\nVocê acorda três dias depois no celeiro da aldeia. O prazo se encerrou. Ao sul, uma coluna de fogo marca o fim de uma era.",
-      choices: [],
-      ending: { type: "defeat", title: "O Bravo Derrotado" }
-    },
-    "village_report": {
-      id: "village_report",
-      title: "Tarde Demais",
-      text: "Quando você reúne a guarda e volta, o navio já partiu. A espada se perdeu além do mar.\n\nSem a espada, o ritual de contenção falha. Vorthaan desperta — mas fraco, sem sua plena força. O reino sobrevive, mas anos difíceis virão.\n\nSua honestidade foi valiosa. Mas a oportunidade se foi.",
-      choices: [],
-      ending: { type: "neutral", title: "A Verdade Tardia" }
-    },
-    "elder_help": {
-      id: "elder_help",
-      title: "Sabedoria Antiga",
-      text: "Mirdan fecha os olhos por um longo momento. Então abre um mapa velho.\n\n«Eu não posso cavalgar. Mas conheço o caminho secreto pelo qual o Conde deve ter entrado no templo — e por onde vai sair. O Porto das Garças.»\n\nEle pressiona o mapa em suas mãos. «Vá. O tempo é curto.»",
-      choices: [
-        { text: "Partir para o Porto das Garças", next: "harbor" }
+
+    "runas_falha": {
+      "id": "runas_falha",
+      "title": "Saber Insuficiente",
+      "text": "Os símbolos são completamente opacos para você. Você copia-os num pedaço de couro com carvão — talvez alguém mais sábio possa decifrá-los.",
+      "choices": [
+        { "text": "Ir à Torre das Letras mostrar os símbolos", "next": "torre_letras", "tagEffects": [{ "tag": "tem_copia_runas", "value": true }] }
       ]
     },
-    "track_guards": {
-      id: "track_guards",
-      title: "Na Trilha",
-      text: "Com a cabeça latejando, você segue as pegadas pela floresta até uma estrada que leva ao norte... em direção ao Porto das Garças.",
-      choices: [
-        { text: "Seguir para o Porto das Garças", next: "harbor" }
+
+    "catacumbas_prematura": {
+      "id": "catacumbas_prematura",
+      "title": "Escuridão sem Guia",
+      "text": "As catacumbas são um labirinto sem iluminação. Sem conhecimento do layout ou do que enfrenta, você se perde por horas antes de conseguir sair.\n\nQuando emerge, está anoitecendo. O sino da torre toca oito. Você corre para dentro da estalagem.",
+      "choices": [
+        { "text": "Esperar o amanhecer e ir à Torre das Letras", "next": "torre_letras", "vida": -1, "sanidade": -1 }
       ]
+    },
+
+    "torre_letras": {
+      "id": "torre_letras",
+      "title": "A Arquivista",
+      "text": "A Torre das Letras é uma construção de pedra cinza, sobrevivente de três incêndios e dois saques ao longo dos séculos. Por dentro, cheira a papel velho e tinta fermentada.\n\nA Arquivista Solenne tem uns sessenta anos mas se move com a energia de alguém da metade disso. Ela te olha por cima de óculos redondos, depois olha para a porta que você fechou, depois de volta para você.\n\n«Você chegou», diz ela, como se soubesse exatamente quem você é.",
+      "dialogues": [
+        {
+          "speaker": "Solenne",
+          "portrait": "👩‍🏫",
+          "text": "Sente-se, {{nome}}. Tenho muito a dizer e pouco tempo para dizê-lo."
+        },
+        {
+          "speaker": "Solenne",
+          "portrait": "👩‍🏫",
+          "text": "O que está acontecendo com Valdris não é uma praga. É a ressurreição de um ritual que não devia ser possível — o Ritual de Aetherion."
+        },
+        {
+          "speaker": "Solenne",
+          "portrait": "👩‍🏫",
+          "text": "Há trezentos anos, o Feiticeiro Aetherion criou uma pedra capaz de drenar a vida de uma cidade inteira para alimentar seu próprio poder. Foi destruída — ou assim achávamos. Parece que alguém encontrou os fragmentos."
+        }
+      ],
+      "choices": [
+        { "text": "Perguntar quem está por trás disso", "next": "solenne_culpado" },
+        {
+          "text": "Mostrar as runas copiadas (se tiver)",
+          "next": "solenne_runas",
+          "tagRules": [{ "tag": "tem_copia_runas", "mode": "show" }, { "tag": "viu_runas", "mode": "show" }]
+        },
+        { "text": "Perguntar como parar o ritual", "next": "solenne_plano" }
+      ]
+    },
+
+    "solenne_runas": {
+      "id": "solenne_runas",
+      "title": "Confirmação",
+      "text": "Solenne examina sua cópia das runas com mãos que tremem levemente.\n\n«São runas de Aprisionamento de Alma. Do Velho Eldric.» Ela faz uma pausa longa. «Há sete locais na cidade onde almas estão presas. Cada uma que o ritual consome alimenta a Pedra.»\n\n«Você já viu um. Os outros estão...» Ela vai a um mapa na parede e marca seis pontos com tinta vermelha. «...aqui, aqui, aqui...»\n\nVocê ganhou um avanço precioso.",
+      "choices": [
+        { "text": "Perguntar quem está por trás disso", "next": "solenne_culpado", "points": 30 }
+      ]
+    },
+
+    "solenne_culpado": {
+      "id": "solenne_culpado",
+      "title": "O Nome Não Dito",
+      "text": "Solenne fecha os olhos por um momento.\n\n«O Lorde Caldwin. Ele visitou as Ruínas de Aetherion seis meses atrás e voltou com algo — um fragmento da Pedra original. Desde então, está reconstituindo o ritual passo a passo.»\n\n«Mas Caldwin não age sozinho. Há um Arauto — um ser que habita a névoa e serve como intermediário entre Caldwin e a Pedra. Não sei sua forma verdadeira.»\n\nEla pausa, pesarosa.\n\n«E há mais. Caldwin tem uma filha — Lyria. Ela foi uma de minhas alunas. Não acredito que ela sabe o que o pai faz.»",
+      "choices": [
+        { "text": "Perguntar como parar o ritual", "next": "solenne_plano" }
+      ]
+    },
+
+    "solenne_plano": {
+      "id": "solenne_plano",
+      "title": "O Caminho Diante de Vós",
+      "text": "Solenne desdobra um mapa antigo sobre a mesa.\n\n«A Pedra de Aetherion está sendo remontada no porão do castelo. Para destruí-la, você precisa de uma das três coisas: a Chama Sagrada do Templo de Arden — ao norte, nas montanhas. O Selo de Dissolução, que está nas catacumbas sob a cidade. Ou...» ela hesita, «...a própria magia de Aetherion invertida — o que exigiria convencer Caldwin a quebrar o ritual ele mesmo.»\n\n«Cada caminho é perigoso. Cada um pode funcionar. E você tem talvez três dias antes que o ritual esteja completo.»\n\nEla coloca uma bolsa com moedas na mesa.\n\n«Eu pagaria, mas não tenho mais o que pagar. Isso é tudo que me resta.»",
+      "dialogues": [
+        {
+          "speaker": "Solenne",
+          "portrait": "👩‍🏫",
+          "text": "Seja qual for o caminho que escolher — volte vivo, {{nome}}. A cidade precisa de testemunhas do que aconteceu aqui."
+        }
+      ],
+      "choices": [
+        { "text": "Partir para as Catacumbas em busca do Selo de Dissolução", "next": "catacumbas_entrada", "points": 15, "tagEffects": [{ "tag": "missao_aceita", "value": true }] },
+        { "text": "Ir ao norte em direção ao Templo de Arden buscar a Chama Sagrada", "next": "estrada_norte", "points": 15, "tagEffects": [{ "tag": "missao_aceita", "value": true }] },
+        { "text": "Tentar contatar Lyria, filha de Caldwin, antes de qualquer coisa", "next": "busca_lyria", "points": 10, "tagEffects": [{ "tag": "missao_aceita", "value": true }] }
+      ]
+    },
+
+    "busca_lyria": {
+      "id": "busca_lyria",
+      "title": "A Filha do Lorde",
+      "text": "Lyria Caldwin é encontrada no jardim do castelo — a única parte que ainda tem cor, como se ela própria estivesse resistindo à névoa ao redor.\n\nEla é uma jovem de uns vinte anos, cabelos negros, um livro aberto nas mãos. Ela te olha com desconfiança quando você se aproxima.\n\n«Se meu pai mandou você, pode ir embora.»\n\nVocê explica quem é e o que sabe. Ela ouve em silêncio — mas você vê seu rosto mudar à medida que as peças se encaixam.",
+      "dialogues": [
+        {
+          "speaker": "Lyria",
+          "portrait": "👩",
+          "text": "Eu sabia que algo estava errado. Desde que ele voltou das ruínas... mas eu não queria acreditar."
+        },
+        {
+          "speaker": "Lyria",
+          "portrait": "👩",
+          "text": "Ele ficou obcecado com a imortalidade depois que minha mãe morreu. Eu entendo a dor, mas... isso..."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Tentar convencer Lyria a ajudar a parar o pai",
+          "attrCheck": "carisma",
+          "difficulty": 5,
+          "next": "lyria_aliada",
+          "nextFail": "lyria_incerta",
+          "pointsSuccess": 80,
+          "tagEffects": [{ "tag": "conhece_lyria", "value": true }]
+        },
+        { "text": "Apenas pedir informações sobre o castelo", "next": "lyria_info", "tagEffects": [{ "tag": "conhece_lyria", "value": true }] }
+      ]
+    },
+
+    "lyria_aliada": {
+      "id": "lyria_aliada",
+      "title": "Uma Aliada Inesperada",
+      "text": "As palavras certas, ditas com convicção genuína, funcionam.\n\nLyria fecha o livro com firmeza.\n\n«Muito bem. Mas preciso de prova do que você diz antes de agir contra meu próprio pai. Se você conseguir o Selo das Catacumbas ou a Chama do Templo, me encontre de volta aqui ao entardecer. Com provas, posso abrir o portão do porão por dentro.»\n\nEla passa um anel de prata para sua mão.\n\n«Mostre isso aos guardas do portão lateral. Eles me devem lealdade, não a Caldwin.»",
+      "choices": [
+        { "text": "Ir às Catacumbas buscar o Selo", "next": "catacumbas_entrada", "points": 30, "tagEffects": [{ "tag": "lyria_aliada", "value": true }, { "tag": "tem_anel_lyria", "value": true }] },
+        { "text": "Ir ao norte buscar a Chama Sagrada", "next": "estrada_norte", "points": 30, "tagEffects": [{ "tag": "lyria_aliada", "value": true }, { "tag": "tem_anel_lyria", "value": true }] }
+      ]
+    },
+
+    "lyria_incerta": {
+      "id": "lyria_incerta",
+      "title": "Hesitação",
+      "text": "Lyria não foi convencida completamente — a lealdade filial é mais forte.\n\n«Eu preciso pensar. Venha me ver de volta quando tiver provas concretas do que está acontecendo.»\n\nNão é uma recusa. Mas também não é uma aliança.",
+      "choices": [
+        { "text": "Ir às Catacumbas buscar o Selo", "next": "catacumbas_entrada", "tagEffects": [{ "tag": "conhece_lyria", "value": true }] },
+        { "text": "Ir ao norte buscar a Chama Sagrada", "next": "estrada_norte", "tagEffects": [{ "tag": "conhece_lyria", "value": true }] }
+      ]
+    },
+
+    "lyria_info": {
+      "id": "lyria_info",
+      "title": "Mapa do Castelo",
+      "text": "Lyria não se compromete, mas sua curiosidade a faz falar.\n\n«O porão tem duas entradas. A principal, guardada por soldados leais a meu pai. E uma passagem secreta — ela sai atrás da estátua de fundador na praça central.»\n\nUma informação valiosa.",
+      "choices": [
+        { "text": "Ir às Catacumbas buscar o Selo", "next": "catacumbas_entrada", "tagEffects": [{ "tag": "conhece_passagem", "value": true }] },
+        { "text": "Ir ao norte buscar a Chama Sagrada", "next": "estrada_norte", "tagEffects": [{ "tag": "conhece_passagem", "value": true }] }
+      ]
+    },
+
+    "catacumbas_entrada": {
+      "id": "catacumbas_entrada",
+      "title": "As Catacumbas da Âncora",
+      "text": "A entrada das catacumbas fica na Praça da Âncora — um antigo alçapão de ferro enferrujado que qualquer habitante de Valdris sabe que não deve abrir.\n\nLá embaixo, o cheiro de pedra úmida e algo mais — algo velho e metálico, como sangue que secou há séculos.\n\nSeu lampião projeta sombras nas paredes onde ossos repousam em nichos. Mas há algo mais que ossos aqui — no chão, frescos rastros de botas. Alguém passou recentemente.",
+      "choices": [
+        { "text": "Seguir os rastros das botas", "next": "catacumbas_rastros" },
+        { "text": "Buscar o Selo sistematicamente, sala por sala", "next": "catacumbas_busca" },
+        { "text": "Tentar sentir a magia — o Selo deveria irradiar energia", "attrCheck": "sabedoria", "difficulty": 5, "next": "catacumbas_sentido", "nextFail": "catacumbas_busca", "pointsSuccess": 20 }
+      ]
+    },
+
+    "catacumbas_rastros": {
+      "id": "catacumbas_rastros",
+      "title": "Pegadas no Pó",
+      "text": "As pegadas levam a uma câmara mais profunda onde a parede tem marcas recentes — pedras removidas e repostas. Alguém esteve mexendo aqui.\n\nAtrás das pedras, você encontra: não o Selo, mas um diário encadernado em couro negro e uma espada com runas gravadas que pulsa levemente ao toque.\n\nO diário pertence a um agente de Caldwin. As anotações mostram que o Arauto — o ser da névoa — usou essas catacumbas para esconder partes do ritual antes de Caldwin assumir o controle.",
+      "combat": {
+        "name": "Espectro das Catacumbas",
+        "icon": "💀",
+        "vidaMax": 35,
+        "attrs": { "forca": 3, "destreza": 4, "constituicao": 2 },
+        "xpReward": 120,
+        "defeatPenalty": 1,
+        "fleeAllowed": true,
+        "victoryNode": "catacumbas_espectro_vencido",
+        "defeatNode": "catacumbas_derrota",
+        "fleeNode": "catacumbas_fuga",
+        "victoryText": "O espectro se dissolve em névoa com um gemido que ressoa pelas câmaras.",
+        "defeatText": "O frio sobrenatural te paralisa. Você não pode se mover.",
+        "fleeText": "Você corre pelos corredores, o espectro atrás de você, até conseguir distância suficiente.",
+        "victoryTagEffects": [{ "tag": "venceu_espectro", "value": true }],
+        "tagModifiers": [
+          {
+            "tag": "viu_runas",
+            "invert": false,
+            "attrDeltas": { "forca": -2 },
+            "specialAction": { "label": "Invocar Runa", "damage": 15 }
+          }
+        ]
+      },
+      "choices": [
+        { "text": "Continuar buscando o Selo", "next": "catacumbas_busca" }
+      ]
+    },
+
+    "catacumbas_espectro_vencido": {
+      "id": "catacumbas_espectro_vencido",
+      "title": "Câmara Liberada",
+      "text": "Com o espectro derrotado, a câmara parece respirar — como se uma pressão tivesse sido liberada.\n\nNas paredes, símbolos que antes brilhavam fracamente se apagam. Você encontra, em uma gaveta de pedra atrás do altar, o Selo de Dissolução — um disco de obsidiana com runas douradas gravadas em espiral.\n\nEle pulsa levemente em sua mão, quente apesar do frio da pedra.",
+      "choices": [
+        { "text": "Pegar o Selo e ir para o castelo enfrentar Caldwin", "next": "retorno_castelo", "points": 100, "tagEffects": [{ "tag": "tem_selo", "value": true }] }
+      ]
+    },
+
+    "catacumbas_derrota": {
+      "id": "catacumbas_derrota",
+      "title": "Nas Profundezas do Frio",
+      "text": "O espectro te prende numa câmara lateral. Você passa horas prisioneiro do frio sobrenatural até que ele finalmente perde interesse e se dissolve.\n\nVocê escapa das catacumbas machucado e sem o Selo.\n\nA única opção agora é tentar a Chama Sagrada no norte.",
+      "choices": [
+        { "text": "Ir ao norte em busca da Chama Sagrada", "next": "estrada_norte", "vida": -2, "sanidade": -1 }
+      ]
+    },
+
+    "catacumbas_fuga": {
+      "id": "catacumbas_fuga",
+      "title": "Retirada",
+      "text": "Você consegue escapar do espectro pelos corredores labirínticos, emergindo na praça da Âncora ofegante e com a tocha quase apagada.\n\nAs catacumbas são perigosas demais sem um plano melhor. Talvez a Chama Sagrada seja o caminho certo.",
+      "choices": [
+        { "text": "Mudar de plano — ir ao norte buscar a Chama Sagrada", "next": "estrada_norte", "vida": -1 }
+      ]
+    },
+
+    "catacumbas_sentido": {
+      "id": "catacumbas_sentido",
+      "title": "O Sussurro da Magia",
+      "text": "Você fecha os olhos e abre a percepção. Através da pedra e do silêncio, sente um pulso — regular, profundo, como um coração de pedra. Vem de baixo ainda, de uma câmara mais profunda que as outras.\n\nVocê navega pelos corredores com segurança, guiado pelo pulso, chegando diretamente à câmara do Selo.\n\nMas não está vazia.",
+      "combat": {
+        "name": "Guardião de Obsidiana",
+        "icon": "🗿",
+        "vidaMax": 45,
+        "attrs": { "forca": 5, "destreza": 2, "constituicao": 4 },
+        "xpReward": 150,
+        "defeatPenalty": 2,
+        "fleeAllowed": false,
+        "victoryNode": "catacumbas_guardiao_vencido",
+        "defeatNode": "catacumbas_derrota",
+        "victoryText": "O guardião racha em duas partes iguais, e pedaços de obsidiana caem ao chão.",
+        "defeatText": "A força esmagadora do guardião te joga contra a parede. Você perde a consciência.",
+        "victoryTagEffects": [{ "tag": "venceu_guardiao", "value": true }]
+      },
+      "choices": []
+    },
+
+    "catacumbas_guardiao_vencido": {
+      "id": "catacumbas_guardiao_vencido",
+      "title": "O Selo Revelado",
+      "text": "O Guardião cai. No pedestal que ele protegia, o Selo de Dissolução reluz — disco de obsidiana com espirais douradas que parecem mover-se lentamente.\n\nEle é extraordinariamente pesado para seu tamanho. Você o coloca em sua mochila com cuidado.",
+      "choices": [
+        { "text": "Ir para o castelo com o Selo", "next": "retorno_castelo", "points": 150, "tagEffects": [{ "tag": "tem_selo", "value": true }, { "tag": "caminho_das_catacumbas", "value": true }] }
+      ]
+    },
+
+    "catacumbas_busca": {
+      "id": "catacumbas_busca",
+      "title": "A Busca Sistemática",
+      "text": "Sala por sala, corredor por corredor — a busca leva horas e seu lampião está na metade do óleo.\n\nNa câmara mais profunda, você encontra o Selo de Dissolução sobre um altar — mas também um guardião de pedra que desperta ao seu toque.",
+      "combat": {
+        "name": "Guardião de Obsidiana",
+        "icon": "🗿",
+        "vidaMax": 45,
+        "attrs": { "forca": 5, "destreza": 2, "constituicao": 4 },
+        "xpReward": 150,
+        "defeatPenalty": 2,
+        "fleeAllowed": false,
+        "victoryNode": "catacumbas_guardiao_vencido",
+        "defeatNode": "catacumbas_derrota",
+        "victoryText": "O guardião racha em duas partes iguais.",
+        "defeatText": "Você é esmagado contra a parede de pedra.",
+        "victoryTagEffects": [{ "tag": "venceu_guardiao", "value": true }]
+      },
+      "choices": []
+    },
+
+    "estrada_norte": {
+      "id": "estrada_norte",
+      "title": "A Estrada das Pedras Brancas",
+      "text": "A estrada para o norte sobe através de colinas cobertas de carvalhos até que a neve começa a aparecer nos topos das montanhas. O ar aqui é mais limpo — a névoa de Valdris fica para trás com cada passo.\n\nMas o caminho não é seguro. Há botas no lodo que não são de viajantes comuns — são pesadas demais, espaçadas como quem carrega peso.\n\nSoldados de Caldwin. Ele enviou gente para bloquear o caminho ao templo.",
+      "choices": [
+        {
+          "text": "Usar furtividade para evitar os soldados",
+          "attrCheck": "destreza",
+          "difficulty": 6,
+          "next": "templo_arden",
+          "nextFail": "emboscada_soldados",
+          "pointsSuccess": 60
+        },
+        { "text": "Encontrar um caminho alternativo pelas colinas", "next": "colinas_desvio" },
+        { "text": "Enfrentar os soldados diretamente", "next": "batalha_estrada" }
+      ]
+    },
+
+    "emboscada_soldados": {
+      "id": "emboscada_soldados",
+      "title": "Descoberto",
+      "text": "Você não foi furtivo o suficiente. Três soldados te cercam antes que você possa reagir.\n\nA luta é inevitável.",
+      "combat": {
+        "name": "Soldados de Caldwin",
+        "icon": "⚔️",
+        "vidaMax": 50,
+        "attrs": { "forca": 4, "destreza": 3, "constituicao": 3 },
+        "xpReward": 100,
+        "defeatPenalty": 2,
+        "fleeAllowed": true,
+        "victoryNode": "templo_arden",
+        "defeatNode": "capturado_soldados",
+        "fleeNode": "colinas_desvio",
+        "victoryText": "Os soldados recuam, feridos. O caminho está livre.",
+        "defeatText": "Superado em número, você é capturado.",
+        "fleeText": "Você mergulha morro abaixo antes que possam te cercar.",
+        "victoryTagEffects": [{ "tag": "derrotou_soldados", "value": true }]
+      },
+      "choices": []
+    },
+
+    "capturado_soldados": {
+      "id": "capturado_soldados",
+      "title": "Prisioneiro de Caldwin",
+      "text": "Você acorda acorrentado numa sala de pedra — provavelmente uma estação de vigia abandonada. Um dos soldados examina seus pertences.\n\nA noite avança. O ritual progride.\n\nMas as correntes são velhas. E você ainda tem seus atributos.",
+      "choices": [
+        {
+          "text": "Tentar quebrar as correntes com força bruta",
+          "attrCheck": "forca",
+          "difficulty": 6,
+          "next": "fuga_prisao",
+          "nextFail": "prisao_longa",
+          "vidaFail": -1
+        },
+        {
+          "text": "Tentar convencer o guarda a te libertar",
+          "attrCheck": "carisma",
+          "difficulty": 7,
+          "next": "guarda_convencido",
+          "nextFail": "prisao_longa",
+          "pointsSuccess": 50
+        }
+      ]
+    },
+
+    "guarda_convencido": {
+      "id": "guarda_convencido",
+      "title": "Consciência Desperta",
+      "text": "O guarda mais jovem ouve sua história sobre o ritual com crescente palidez.\n\n«Se o Lorde realmente está fazendo isso...» ele murmura. Então olha para a porta e, após um silêncio longo, solta suas correntes.\n\n«Nunca me viu», diz ele.\n\nVocê tem um aliado inesperado — e informações: os soldados foram instruídos a prender qualquer um indo ao Templo de Arden. Caldwin sabe que a Chama Sagrada pode destruir sua Pedra.",
+      "choices": [
+        { "text": "Ir ao Templo de Arden com essa confirmação", "next": "templo_arden", "points": 70, "tagEffects": [{ "tag": "guarda_aliado", "value": true }] }
+      ]
+    },
+
+    "fuga_prisao": {
+      "id": "fuga_prisao",
+      "title": "Ferro Dobrado",
+      "text": "Com um esforço sobre-humano, você torce as argolas velhas até que cedam. Enquanto o guarda cochila, você escorrega para fora pela janela.\n\nO caminho para o templo ainda está à sua frente.",
+      "choices": [
+        { "text": "Continuar para o Templo de Arden", "next": "templo_arden", "vida": -1 }
+      ]
+    },
+
+    "prisao_longa": {
+      "id": "prisao_longa",
+      "title": "Horas Perdidas",
+      "text": "Você passa a noite preso. Pela manhã, quando os soldados vão checar outros postos, consegue se libertar com mais calma.\n\nMas você perdeu um dia inteiro. O ritual está mais avançado.",
+      "choices": [
+        { "text": "Ir ao templo — há ainda tempo", "next": "templo_arden", "vida": -1, "sanidade": -1 }
+      ]
+    },
+
+    "colinas_desvio": {
+      "id": "colinas_desvio",
+      "title": "O Caminho dos Pastores",
+      "text": "Você encontra uma trilha estreita usada por pastores para conduzir rebanhos entre as colinas. É mais longa, mas evita os soldados.\n\nNo caminho, um ancião pastor te vê e acena.\n\n«Se vai ao Templo de Arden», ele diz, «leva isso.» Ele coloca em suas mãos um frasco de azeite bento. «A Irmandade usa para iluminar os altares. Você vai precisar.»",
+      "choices": [
+        { "text": "Agradecer e continuar ao templo", "next": "templo_arden", "points": 20, "tagEffects": [{ "tag": "tem_azeite_bento", "value": true }] }
+      ]
+    },
+
+    "batalha_estrada": {
+      "id": "batalha_estrada",
+      "title": "Confronto na Estrada",
+      "text": "Você avança em direção aos soldados sem hesitar. Eles ficam surpresos — a maioria dos viajantes corre.\n\nA vantagem da surpresa é sua por uns cinco segundos.",
+      "combat": {
+        "name": "Tropa de Caldwin",
+        "icon": "🪖",
+        "vidaMax": 55,
+        "attrs": { "forca": 4, "destreza": 3, "constituicao": 3 },
+        "xpReward": 110,
+        "defeatPenalty": 2,
+        "fleeAllowed": true,
+        "victoryNode": "templo_arden",
+        "defeatNode": "capturado_soldados",
+        "fleeNode": "colinas_desvio",
+        "victoryText": "Os soldados recuam ante sua determinação. A estrada é sua.",
+        "defeatText": "Três contra um — as probabilidades finalmente te alcançam.",
+        "fleeText": "Você aproveita um momento de hesitação deles para desviar para as colinas.",
+        "victoryTagEffects": [{ "tag": "derrotou_soldados", "value": true }]
+      },
+      "choices": []
+    },
+
+    "templo_arden": {
+      "id": "templo_arden",
+      "title": "O Templo nas Montanhas",
+      "text": "O Templo de Arden é esculpido diretamente na rocha da montanha — uma fachada de pedra branca com colunas cobertas de musgo e uma chama eterna queimando acima da entrada, visível a quilômetros de distância.\n\nDentro, uma Irmandade de monges de hábitos azuis cuida do fogo sagrado há gerações.\n\nA Mestra do Templo, Irma Veshan, te recebe com expressão cautelosa.",
+      "dialogues": [
+        {
+          "speaker": "Irma Veshan",
+          "portrait": "🧕",
+          "text": "Viemos a saber sobre a névoa de Valdris. Estávamos esperando que alguém viesse."
+        },
+        {
+          "speaker": "Irma Veshan",
+          "portrait": "🧕",
+          "text": "A Chama Sagrada pode dissipar a magia de Aetherion — mas não pode ser simplesmente transportada. Ela precisa de um recipiente adequado."
+        }
+      ],
+      "choices": [
+        { "text": "Perguntar o que é um recipiente adequado", "next": "templo_recipiente" },
+        {
+          "text": "Oferecer o frasco de azeite bento como recipiente (se tiver)",
+          "next": "templo_azeite",
+          "tagRules": [{ "tag": "tem_azeite_bento", "mode": "show" }]
+        }
+      ]
+    },
+
+    "templo_azeite": {
+      "id": "templo_azeite",
+      "title": "O Frasco Perfeito",
+      "text": "Veshan olha para o frasco de azeite bento com surpresa genuína.\n\n«O ancião Boros te deu isso? Ele foi monge aqui por quarenta anos.» Ela examina o frasco. «É o recipiente certo, sim. Purificado, abençoado, feito para conter o sagrado.»\n\nEla conduz você ao altar principal e, com um gesto preciso, transfere uma chama viva para dentro do frasco. A chama queima dentro do vidro sem consumir o azeite.\n\n«Não a apague e não a tampe. E aja rápido — ela dura trinta e seis horas.»",
+      "choices": [
+        { "text": "Agradecer e partir para o castelo de Caldwin", "next": "retorno_castelo", "points": 120, "tagEffects": [{ "tag": "tem_chama", "value": true }] }
+      ]
+    },
+
+    "templo_recipiente": {
+      "id": "templo_recipiente",
+      "title": "O Preço da Chama",
+      "text": "«A Chama precisa de um recipiente purificado — vidro bento, cristal sagrado ou cerâmica ritual.» Veshan pausa. «Temos um na câmara sagrada, mas está selado como parte de nosso próprio ritual anual.»\n\nEla cruza os braços.\n\n«Posso oferecer o recipiente — mas você precisará fazer algo por nós primeiro. Há um demônio menor aninhado na câmara das oferendas. Está lá há três dias e impedindo o acesso ao arquivo sagrado.»",
+      "choices": [
+        { "text": "Enfrentar o demônio na câmara das oferendas", "next": "templo_demonio" },
+        {
+          "text": "Tentar negociar com argumentos — a cidade está morrendo",
+          "attrCheck": "carisma",
+          "difficulty": 7,
+          "next": "templo_negociado",
+          "nextFail": "templo_demonio",
+          "pointsSuccess": 30
+        }
+      ]
+    },
+
+    "templo_negociado": {
+      "id": "templo_negociado",
+      "title": "Urgência Reconhecida",
+      "text": "Veshan ouve sua descrição da situação — crianças presas pela névoa, a cidade agonizando, o prazo — e sua expressão muda gradualmente.\n\n«Quando a balança pesa vidas de inocentes...» ela murmura. Então: «Muito bem. Mas você ainda precisa passar pela câmara das oferendas. O demônio não me deixa chegar ao recipiente.»",
+      "choices": [
+        { "text": "Enfrentar o demônio", "next": "templo_demonio" }
+      ]
+    },
+
+    "templo_demonio": {
+      "id": "templo_demonio",
+      "title": "A Câmara Infestada",
+      "text": "A câmara das oferendas cheira a enxofre. No centro, uma criatura de fumaça negra e olhos vermelhos ocupa o altar — um demônio menor, mas ainda assim mais que um homem pode esperar enfrentar levianamente.",
+      "combat": {
+        "name": "Demônio das Oferendas",
+        "icon": "👿",
+        "vidaMax": 40,
+        "attrs": { "forca": 4, "destreza": 5, "constituicao": 2 },
+        "xpReward": 130,
+        "defeatPenalty": 1,
+        "fleeAllowed": false,
+        "victoryNode": "templo_demonio_vencido",
+        "defeatNode": "templo_demonio_derrota",
+        "victoryText": "O demônio se dissolve em fumaça negra com um guincho que ecoa pelas câmaras do templo.",
+        "defeatText": "A fumaça negra te envolve e você perde a consciência.",
+        "victoryTagEffects": [{ "tag": "purificou_templo", "value": true }],
+        "tagModifiers": [
+          {
+            "tag": "tem_azeite_bento",
+            "invert": false,
+            "attrDeltas": { "forca": -3, "destreza": -2 },
+            "specialAction": { "label": "Lançar Azeite Bento", "damage": 20 }
+          }
+        ]
+      },
+      "choices": []
+    },
+
+    "templo_demonio_vencido": {
+      "id": "templo_demonio_vencido",
+      "title": "A Chama é Sua",
+      "text": "Com o demônio dissolvido, Veshan entra na câmara e recupera o recipiente sagrado — uma esfera de cristal do tamanho de um punho.\n\nCom cerimônia breve mas sincera, ela transfere a Chama Sagrada para dentro. Ela pulsa como um coração de ouro.\n\n«Que Arden guie seus passos», diz ela.",
+      "choices": [
+        { "text": "Partir para o castelo de Caldwin", "next": "retorno_castelo", "points": 150, "tagEffects": [{ "tag": "tem_chama", "value": true }] }
+      ]
+    },
+
+    "templo_demonio_derrota": {
+      "id": "templo_demonio_derrota",
+      "title": "Repelido",
+      "text": "O demônio é mais forte do que esperava. Você é expelido da câmara inconscientemente.\n\nOs monges te curam. Mas o tempo passou — e o recipiente ainda está lá dentro.\n\nVeshan oferece uma alternativa: você pode tentar recuperar o Selo das Catacumbas em vez disso. Ela pode enviar um monge para guiá-lo.",
+      "choices": [
+        { "text": "Aceitar a ajuda e ir às Catacumbas", "next": "catacumbas_entrada", "vida": -2 }
+      ]
+    },
+
+    "retorno_castelo": {
+      "id": "retorno_castelo",
+      "title": "O Castelo de Caldwin",
+      "text": "Você retorna a Valdris com o que precisa para acabar com o ritual.\n\nA névoa está mais densa agora — quase sólida em alguns lugares, e você ouve sussurros nela ao caminhar. O ritual está nos estágios finais.\n\nO castelo de Caldwin domina o centro da cidade. Guardas com olhos vazios patrulham as muralhas — soldados já tocados pela névoa.\n\nComo você vai entrar?",
+      "choices": [
+        {
+          "text": "Usar o anel de Lyria para entrar pelo portão lateral",
+          "next": "entrada_lyria",
+          "tagRules": [{ "tag": "tem_anel_lyria", "mode": "show" }]
+        },
+        {
+          "text": "Usar a passagem secreta atrás da estátua do fundador",
+          "next": "passagem_secreta",
+          "tagRules": [{ "tag": "conhece_passagem", "mode": "show" }]
+        },
+        {
+          "text": "Escalar as muralhas e entrar pela força",
+          "attrCheck": "forca",
+          "difficulty": 7,
+          "next": "escalar_muralha",
+          "nextFail": "muralha_falha"
+        },
+        {
+          "text": "Tentar se disfarçar de soldado de Caldwin",
+          "attrCheck": "carisma",
+          "difficulty": 6,
+          "next": "disfrace_soldado",
+          "nextFail": "disfrace_falha"
+        }
+      ]
+    },
+
+    "entrada_lyria": {
+      "id": "entrada_lyria",
+      "title": "A Cumplicidade de Lyria",
+      "text": "Os guardas do portão lateral reconhecem o anel de Lyria e, após um momento de hesitação, abrem o portão.\n\nLyria está esperando do lado de dentro, seu rosto tenso.\n\n«Você voltou com o que precisa?» Ela olha para o que você carrega e fecha os olhos por um segundo. «Muito bem. O porão fica três andares abaixo. Vou levar você até a escada.»\n\nEla guia você pelos corredores do castelo, evitando os guardas que conhece. Nas profundezas, vocês ouvem um pulso — regular, como um tambor — vindo de baixo.",
+      "choices": [
+        { "text": "Descer ao porão com Lyria", "next": "porao_descida", "points": 50, "tagEffects": [{ "tag": "lyria_junto", "value": true }] }
+      ]
+    },
+
+    "passagem_secreta": {
+      "id": "passagem_secreta",
+      "title": "Atrás do Fundador",
+      "text": "A estátua de pedra na praça central tem uma placa que, ao ser pressionada no canto inferior esquerdo, revela uma escada estreita que desce.\n\nVocê a percorre no escuro até emergir num corredor no interior do castelo — abaixo do nível do chão. Em frente, a porta do porão está entreaberta.\n\nÉ quase fácil demais.",
+      "choices": [
+        { "text": "Entrar pelo porão com cuidado", "next": "porao_descida", "points": 40 }
+      ]
+    },
+
+    "escalar_muralha": {
+      "id": "escalar_muralha",
+      "title": "Sobre as Pedras",
+      "text": "A escalada é brutal mas você consegue. No alto da muralha, um guarda te vê — você o derruba antes que grite. Então desce para o pátio interno e encontra o acesso ao porão.",
+      "choices": [
+        { "text": "Descer ao porão", "next": "porao_descida", "vida": -1 }
+      ]
+    },
+
+    "muralha_falha": {
+      "id": "muralha_falha",
+      "title": "Queda",
+      "text": "Você escorrega a três metros do topo. A queda não é fatal mas é dolorosa. Guardas da patrulha te encontram — mas pela névoa e pela confusão, conseguem só te expulsar do perímetro.\n\nVocê precisa de outra entrada.",
+      "choices": [
+        {
+          "text": "Tentar a passagem secreta atrás da estátua (se souber)",
+          "next": "passagem_secreta",
+          "tagRules": [{ "tag": "conhece_passagem", "mode": "show" }]
+        },
+        {
+          "text": "Tentar o disfarce",
+          "attrCheck": "carisma",
+          "difficulty": 6,
+          "next": "disfrace_soldado",
+          "nextFail": "entrada_forcada",
+          "vida": -1
+        }
+      ]
+    },
+
+    "disfrace_soldado": {
+      "id": "disfrace_soldado",
+      "title": "O Impostor",
+      "text": "Você consegue uma armadura de um soldado desmaiado na rua — a névoa já o tinha afetado. Caminhando com confiança, passa pela guarda principal.\n\nLá dentro, você segue outros soldados até localizar a escada do porão.",
+      "choices": [
+        { "text": "Descer ao porão", "next": "porao_descida", "points": 30 }
+      ]
+    },
+
+    "disfrace_falha": {
+      "id": "disfrace_falha",
+      "title": "Descoberto",
+      "text": "Um sargento te reconhece como estranho — sua postura não é de soldado treinado. A perseguição começa.\n\nVocê foge pelos becos de Valdris e finalmente volta à praça do fundador — onde, por sorte, nota a placa na estátua que Lyria tinha mencionado.",
+      "choices": [
+        { "text": "Usar a passagem secreta atrás da estátua", "next": "passagem_secreta", "sanidade": -1 }
+      ]
+    },
+
+    "entrada_forcada": {
+      "id": "entrada_forcada",
+      "title": "Força Bruta Final",
+      "text": "Sem opções sutis, você simplesmente avança. A confusão da névoa trabalha a seu favor — os guardas estão desorientados e mal reagem antes que você já esteja dentro.",
+      "choices": [
+        { "text": "Correr para o porão", "next": "porao_descida", "vida": -2, "sanidade": -1 }
+      ]
+    },
+
+    "porao_descida": {
+      "id": "porao_descida",
+      "title": "O Coração Podre",
+      "text": "O porão de Caldwin é uma câmara de pedra negra onde nenhuma tocha queima — a luz vem da própria Pedra de Aetherion.\n\nEla está reunida no centro — seis fragmentos em torno de um núcleo pulsante de luz violeta escura. Ao redor dela, no chão, círculos concêntricos de runas brilham como brasa.\n\nE Lorde Caldwin está de pé atrás da Pedra, olhos completamente violeta, expressão de quem está além do diálogo.\n\nMas ao lado dele — correntes de névoa presas ao seu pulso — está o Arauto. Uma silhueta humanoide feita de sombra sólida.",
+      "dialogues": [
+        {
+          "speaker": "Caldwin",
+          "portrait": "👑",
+          "text": "Você chegou mais longe do que esperava, {{nome}}. Impressionante para um aventureiro sem história."
+        },
+        {
+          "speaker": "O Arauto",
+          "portrait": "🌑",
+          "text": "Elimine o intruso, Caldwin. O ritual está quase completo."
+        },
+        {
+          "speaker": "Caldwin",
+          "portrait": "👑",
+          "text": "Você não entende o que está interrompendo. Com a Pedra completa, posso trazer minha esposa de volta. Posso reverter a morte. O reino inteiro se curará."
+        }
+      ],
+      "choices": [
+        { "text": "Tentar conversar com Caldwin — há dor humana ali", "next": "caldwin_conversa" },
+        { "text": "Atacar o Arauto primeiro — ele é o verdadeiro perigo", "next": "combate_arauto" },
+        {
+          "text": "Usar o Selo de Dissolução na Pedra imediatamente",
+          "next": "uso_selo",
+          "tagRules": [{ "tag": "tem_selo", "mode": "show" }]
+        },
+        {
+          "text": "Usar a Chama Sagrada na Pedra imediatamente",
+          "next": "uso_chama",
+          "tagRules": [{ "tag": "tem_chama", "mode": "show" }]
+        }
+      ]
+    },
+
+    "caldwin_conversa": {
+      "id": "caldwin_conversa",
+      "title": "A Dor de um Pai",
+      "text": "«Elara morreu há dois anos», diz Caldwin, voz quebrando por um momento antes do violeta nos olhos se intensificar novamente. «Ela era a única pessoa que me tornava humano. Sem ela...»\n\nO Arauto tenta interromper, mas Caldwin levanta a mão.\n\n«Com a Pedra completa, a magia de Aetherion pode reverter morte. Ela voltará. O preço é apenas a energia vital de uma cidade que vai se recuperar com o tempo.»\n\nHá lógica quebrada ali — mas há também um homem destroçado.",
+      "choices": [
+        {
+          "text": "«Elara não voltaria para um homem que matou crianças por ela»",
+          "attrCheck": "sabedoria",
+          "difficulty": 6,
+          "next": "caldwin_quebrado",
+          "nextFail": "caldwin_irredimivel",
+          "pointsSuccess": 100,
+          "tagEffects": [{ "tag": "tentou_redimir", "value": true }]
+        },
+        {
+          "text": "«Isso não é querer ela de volta. É querer não sentir culpa»",
+          "attrCheck": "carisma",
+          "difficulty": 7,
+          "next": "caldwin_quebrado",
+          "nextFail": "caldwin_irredimivel",
+          "pointsSuccess": 100,
+          "tagEffects": [{ "tag": "tentou_redimir", "value": true }]
+        },
+        { "text": "Abandonar a tentativa — ele está além do alcance", "next": "combate_caldwin" }
+      ]
+    },
+
+    "caldwin_quebrado": {
+      "id": "caldwin_quebrado",
+      "title": "O Véu se Rasga",
+      "text": "As palavras certas atingem como uma flecha.\n\nCaldwin se imobiliza. O violeta nos olhos pulsa, luta — e por um segundo você vê o homem por baixo. Chorando. Perdido.\n\n«Ela nunca... ela nunca aprovaria...» ele sussurra.\n\nO Arauto ruge e avança para te matar — mas Caldwin se interpõe.\n\n«Não!» A voz dele racha. «Chega de isso.» Ele apontam para a Pedra: «Você. Destrua ela. Faça o que vieste fazer. Eu... vou segurar esse monstro.»\n\nEle e o Arauto entram em conflito direto. Você tem uma janela.",
+      "choices": [
+        {
+          "text": "Usar o Selo de Dissolução agora",
+          "next": "vitoria_redenção",
+          "tagRules": [{ "tag": "tem_selo", "mode": "show" }]
+        },
+        {
+          "text": "Usar a Chama Sagrada agora",
+          "next": "vitoria_redenção",
+          "tagRules": [{ "tag": "tem_chama", "mode": "show" }]
+        },
+        { "text": "Destruir a Pedra com suas próprias mãos", "next": "vitoria_sacrificio" }
+      ]
+    },
+
+    "caldwin_irredimivel": {
+      "id": "caldwin_irredimivel",
+      "title": "Perdido",
+      "text": "Caldwin fecha os olhos. Quando os abre, só há violeta.\n\n«Você não entende perda», diz ele friamente. «O Arauto, trate do intruso.»\n\nO ser de sombra avança.",
+      "choices": [
+        { "text": "Enfrentar o Arauto", "next": "combate_arauto" }
+      ]
+    },
+
+    "combate_arauto": {
+      "id": "combate_arauto",
+      "title": "Sombra contra Luz",
+      "text": "O Arauto é feito de névoa comprimida — cada golpe nele parece dissipar uma camada mas há sempre mais por baixo. Ele se move como sombra através da luz.",
+      "combat": {
+        "name": "O Arauto",
+        "icon": "🌑",
+        "vidaMax": 60,
+        "attrs": { "forca": 5, "destreza": 6, "constituicao": 3 },
+        "xpReward": 200,
+        "defeatPenalty": 2,
+        "fleeAllowed": false,
+        "victoryNode": "arauto_derrotado",
+        "defeatNode": "derrota_porao",
+        "victoryText": "O Arauto se desfaz em névoa que se dissipa rapidamente, sem a vontade que o mantinha coeso.",
+        "defeatText": "A névoa te envolve. Você sente sua consciência se dissolver.",
+        "victoryTagEffects": [{ "tag": "derrotou_arauto", "value": true }],
+        "tagModifiers": [
+          {
+            "tag": "tem_chama",
+            "invert": false,
+            "specialAction": { "label": "Lançar Chama Sagrada", "damage": 25 },
+            "attrDeltas": { "forca": -3, "destreza": -2 }
+          },
+          {
+            "tag": "purificou_templo",
+            "invert": false,
+            "attrDeltas": { "forca": -1, "destreza": -1 }
+          }
+        ]
+      },
+      "choices": []
+    },
+
+    "arauto_derrotado": {
+      "id": "arauto_derrotado",
+      "title": "A Névoa Recua",
+      "text": "Com o Arauto dissolvido, Caldwin recua um passo. Os olhos violeta piscam — e por um momento, você vê o homem de volta.\n\nA Pedra ainda pulsa no centro da câmara.",
+      "choices": [
+        {
+          "text": "Usar o Selo de Dissolução na Pedra",
+          "next": "vitoria_combate",
+          "tagRules": [{ "tag": "tem_selo", "mode": "show" }]
+        },
+        {
+          "text": "Usar a Chama Sagrada na Pedra",
+          "next": "vitoria_combate",
+          "tagRules": [{ "tag": "tem_chama", "mode": "show" }]
+        },
+        { "text": "Tentar uma última vez convencer Caldwin a quebrar o ritual ele mesmo", "next": "caldwin_pos_arauto" }
+      ]
+    },
+
+    "caldwin_pos_arauto": {
+      "id": "caldwin_pos_arauto",
+      "title": "O Homem Liberto",
+      "text": "Sem o Arauto para alimentar a ilusão, Caldwin oscila. As correntes de magia que o conectam à Pedra ficam visíveis — fios de luz violeta entrando pelo peito dele.\n\n«Eu...» ele olha para as mãos, «... o que eu fiz?\"\n\nEle olha para você. «Ela nunca teria querido isso. Elara odiava violência.»\n\nEle fecha os olhos e, num gesto único de vontade, desfaz o círculo de runas com os próprios pés — quebrando o ritual.",
+      "choices": [
+        { "text": "Observar enquanto o ritual se desfaz", "next": "final_redenção_completa", "points": 200, "tagEffects": [{ "tag": "caldwin_redimido", "value": true }] }
+      ]
+    },
+
+    "combate_caldwin": {
+      "id": "combate_caldwin",
+      "title": "O Lorde Corrompido",
+      "text": "Caldwin não dará passagem. A magia da Pedra flui através dele — ele não é mais apenas um homem.",
+      "combat": {
+        "name": "Lorde Caldwin Corrompido",
+        "icon": "👑",
+        "vidaMax": 70,
+        "attrs": { "forca": 5, "destreza": 4, "constituicao": 5, "inteligencia": 4 },
+        "xpReward": 250,
+        "defeatPenalty": 3,
+        "fleeAllowed": false,
+        "victoryNode": "caldwin_derrotado",
+        "defeatNode": "derrota_porao",
+        "victoryText": "Caldwin cai de joelhos. A luz violeta nos olhos se apaga. Ele é apenas um homem novamente.",
+        "defeatText": "O poder de Aetherion é esmagador. Você cai.",
+        "victoryTagEffects": [{ "tag": "derrotou_caldwin", "value": true }]
+      },
+      "choices": []
+    },
+
+    "caldwin_derrotado": {
+      "id": "caldwin_derrotado",
+      "title": "Queda do Tirano",
+      "text": "Caldwin está de joelhos, humano novamente. A Pedra ainda pulsa — o ritual não foi interrompido, apenas seu condutor foi removido.\n\nVocê tem segundos antes que a energia se redirecione.",
+      "choices": [
+        {
+          "text": "Usar o Selo de Dissolução na Pedra",
+          "next": "vitoria_combate",
+          "tagRules": [{ "tag": "tem_selo", "mode": "show" }]
+        },
+        {
+          "text": "Usar a Chama Sagrada na Pedra",
+          "next": "vitoria_combate",
+          "tagRules": [{ "tag": "tem_chama", "mode": "show" }]
+        },
+        { "text": "Destruir a Pedra com tudo que tem", "next": "vitoria_sacrificio" }
+      ]
+    },
+
+    "uso_selo": {
+      "id": "uso_selo",
+      "title": "O Selo em Ação",
+      "text": "Você lança o Selo de Dissolução contra a Pedra. O disco de obsidiana com runas douradas toca o núcleo violeta —\n\n— e o mundo explode em luz branca.",
+      "choices": [
+        { "text": "Continuar...", "next": "explosao_final" }
+      ]
+    },
+
+    "uso_chama": {
+      "id": "uso_chama",
+      "title": "A Chama que Devora o Escuro",
+      "text": "Você lança a Chama Sagrada contra a Pedra. O fogo dourado alcança o núcleo violeta —\n\n— e as chamas sagradas e a magia corrompida se aniquilam mutuamente num jorro de luz.",
+      "choices": [
+        { "text": "Continuar...", "next": "explosao_final" }
+      ]
+    },
+
+    "vitoria_sacrificio": {
+      "id": "vitoria_sacrificio",
+      "title": "O Preço da Bravura",
+      "text": "Sem artefato sagrado, você usa o único recurso que sobrou — você mesmo.\n\nVocê mergulha as mãos no núcleo pulsante da Pedra. A energia de Aetherion te queima como ácido, mas você não recua — você canaliza tudo que tem, toda vida, toda vontade, e empurra de volta.\n\nA explosão te lança pela câmara.\n\nQuando a luz passa, a Pedra está em pó. E a névoa começa a se dissipar sobre Valdris.",
+      "choices": [],
+      "ending": {
+        "type": "victory",
+        "title": "O Sacrifício do Herói",
+        "points": 500
+      }
+    },
+
+    "explosao_final": {
+      "id": "explosao_final",
+      "title": "O Fim da Névoa",
+      "text": "Quando a luz passa, você está de pé — machucado, exausto, mas de pé.\n\nA Pedra de Aetherion é pó.\n\nPelo teto de pedra do porão, você ouve — e é impossível, mas é real — o som de chuva. Chuva limpa, caindo sobre Valdris pela primeira vez em doze dias.\n\nA névoa se dissipou.",
+      "choices": [
+        { "text": "Subir e ver o que restou", "next": "epilogo_caldwin_vivo" }
+      ]
+    },
+
+    "vitoria_combate": {
+      "id": "vitoria_combate",
+      "title": "Valdris Respira",
+      "text": "A Pedra se desfaz. A luz violeta que permeava o porão apaga-se.\n\nLá em cima, através das pedras do castelo, você ouve uma coisa impossível e maravilhosa:\n\nAlguém rindo. Crianças. Vozes humanas normais, com alegria normal.\n\nA névoa acabou.",
+      "choices": [
+        { "text": "Subir para ver o que sobrou", "next": "epilogo_combate" }
+      ]
+    },
+
+    "vitoria_redenção": {
+      "id": "vitoria_redenção",
+      "title": "Redenção e Dissolução",
+      "text": "Com Caldwin segurando o Arauto, você tem os segundos que precisava.\n\nO Selo ou a Chama toca a Pedra —\n\nA explosão de luz dissipa tanto o Arauto quanto a magia da Pedra de uma vez. E quando o brilho passa, Caldwin está de joelhos, chorando — mas humano. Completamente humano.\n\nLá fora, a chuva começa a cair.",
+      "choices": [
+        { "text": "Ir ao lado de Caldwin", "next": "final_redenção" }
+      ]
+    },
+
+    "derrota_porao": {
+      "id": "derrota_porao",
+      "title": "Valdris Cai",
+      "text": "Você acordou fora do castelo — a névoa te expeliu como um corpo estranho.\n\nSem forças para tentar novamente, você observa da beira da cidade quando, ao amanhecer do terceiro dia, o ritual completa.\n\nA névoa engole Valdris.\n\nVocê sobreviveu. A cidade, não.",
+      "choices": [],
+      "ending": {
+        "type": "defeat",
+        "title": "A Cidade Perdida",
+        "points": 50
+      }
+    },
+
+    "final_redenção": {
+      "id": "final_redenção",
+      "title": "O Lorde e a Culpa",
+      "text": "Caldwin permanece ajoelhado por um longo tempo.\n\n«Quanto...», ele sussurra, «... quanto mal fiz?»\n\n«Cinco almas presas», você responde. «Elas já estão sendo liberadas — a névoa está se dissipando. Mas o mal existe.»\n\nLyria desce as escadas e para ao ver o pai. Por um momento longo e tenso, pai e filha se encaram.\n\nThen Lyria ajoelha-se ao lado dele.\n\n«Você vai se entregar ao Conselho», ela diz com firmeza. «E eu vou estar lá.»\n\nCaldwin fecha os olhos e assente.",
+      "choices": [
+        { "text": "Deixar eles e ir ver Valdris se recuperar", "next": "final_vitoria_plena", "points": 150 }
+      ]
+    },
+
+    "final_redenção_completa": {
+      "id": "final_redenção_completa",
+      "title": "Quando o Ritual se Desfaz",
+      "text": "As runas no chão apagam-se uma a uma como estrelas ao amanhecer. A Pedra fragmenta-se silenciosamente — não com explosão, mas com a dignidade quieta de algo que nunca deveria ter existido voltando ao pó.\n\nAs cinco almas presas na névoa são liberadas. Você ouve seus suspiros — de alívio, não de dor.\n\nCaldwin permanece ajoelhado por um longo tempo. Quando se levanta, apenas você e ele estão na câmara.\n\n«Eu preciso pagar por isso», ele diz.\n\n«Sim», você concorda.",
+      "choices": [],
+      "ending": {
+        "type": "victory",
+        "title": "A Redenção de Valdris",
+        "points": 600
+      }
+    },
+
+    "epilogo_caldwin_vivo": {
+      "id": "epilogo_caldwin_vivo",
+      "title": "O Dia Depois",
+      "text": "Valdris acorda como de um sonho ruim.\n\nAs crianças presas pela névoa se movem novamente. Os mercadores abrem as bancas. E a chuva limpa as cinzas das ruas.\n\nCaldwin está sob custódia do Conselho. Lyria — se ela foi sua aliada — está ao lado do pai durante o processo, nem defendendo nem acusando, apenas testemunhando.\n\nSolenne te encontra na praça central, óculos molhados de chuva.\n\n«Você salvou esta cidade», ela diz simplesmente. «Isso ficará nos arquivos. Em todas as cópias.»",
+      "choices": [],
+      "ending": {
+        "type": "victory",
+        "title": "O Guardião de Valdris",
+        "points": 400
+      }
+    },
+
+    "epilogo_combate": {
+      "id": "epilogo_combate",
+      "title": "Poeira e Chuva",
+      "text": "A praça principal de Valdris está cheia de pessoas que não sabem bem o que aconteceu mas sabem que pode respirar novamente.\n\nCaldwin está preso. O Arauto é memória.\n\nSolenne te encontra com um sorriso cansado.\n\n«Você poderia ter feito diferente, mais limpo», diz ela. «Mas fez. E funcionou.»\n\nEla coloca uma medalha de bronze na sua mão — o símbolo da cidade. «Isso é tudo que Valdris tem para oferecer agora. Mas é real.»",
+      "choices": [],
+      "ending": {
+        "type": "victory",
+        "title": "O Lutador de Valdris",
+        "points": 350
+      }
+    },
+
+    "final_vitoria_plena": {
+      "id": "final_vitoria_plena",
+      "title": "Chuva sobre Valdris",
+      "text": "A cidade se recupera com uma velocidade que surpreende até Solenne. Como se a névoa tivesse suprimido não só a vida, mas a vontade de viver — e ambas voltam juntas.\n\nTrês dias depois, quando você está se preparando para partir, Bran o mesoneiro bate à sua porta.\n\n«A Câmara de Valdris quer lhe oferecer casa e cargo aqui. Protetor da cidade.» Ele ri. «Sei que vai recusar. Aventureiros recusam sempre. Mas queriam que você soubesse que a oferta existe.»\n\nVocê sorri. A estrada chama.\n\nMas Valdris sempre terá uma cama para você.",
+      "choices": [],
+      "ending": {
+        "type": "victory",
+        "title": "O Lendário de Valdris",
+        "points": 700
+      }
     }
-  }
-};
 
-// ═══════════════════════════════════════════════════════════
-//  ATTRIBUTES SYSTEM
-// ═══════════════════════════════════════════════════════════
-const ATTRS = [
-  { key: 'forca',        name: 'Força',        icon: '⚔️',  desc: 'Combate físico, arrombamentos, intimidação' },
-  { key: 'destreza',     name: 'Destreza',     icon: '🗡️',  desc: 'Furtividade, acrobacia, pontaria' },
-  { key: 'inteligencia', name: 'Inteligência', icon: '📚',  desc: 'Magia, decifrar runas, estratégia' },
-  { key: 'carisma',      name: 'Carisma',      icon: '🎶',  desc: 'Persuasão, negociação, liderança' },
-  { key: 'sabedoria',    name: 'Sabedoria',    icon: '🌙',  desc: 'Percepção, vontade, resistência mental' },
-  { key: 'constituicao', name: 'Constituição', icon: '🛡️',  desc: 'Resistência física, vigor, recuperação' },
-];
-
-const ATTR_MIN = 1;
-const ATTR_MAX_CREATION = 5;  // máximo na criação de personagem
-const ATTR_MAX = 10;          // máximo absoluto (com bônus de sidequests)
-const FREE_POINTS = 7;        // pontos livres para distribuir além do mínimo base
-const BASE_POINTS_USED = ATTRS.length * ATTR_MIN;
-const TOTAL_POINTS = FREE_POINTS + BASE_POINTS_USED;
-
-// Fórmulas de vida e sanidade derivadas dos atributos
-// vida    = 5 + constituição  (mín 6, máx 15)
-// sanidade = 5 + sabedoria    (mín 6, máx 15)
-function calcMaxVida(attrs)     { return 5 + (attrs.constituicao || 1); }
-function calcMaxSanidade(attrs) { return 5 + (attrs.sabedoria    || 1); }
-
-const CLASS_PRESETS = {
-  //                        FOR  DES  INT  CAR  SAB  CON   ← atributo principal
-  warrior:  { forca:5, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'forca' },
-  rogue:    { forca:1, destreza:5, inteligencia:1, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'destreza' },
-  mage:     { forca:1, destreza:1, inteligencia:5, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'inteligencia' },
-  bard:     { forca:1, destreza:1, inteligencia:1, carisma:5, sabedoria:1, constituicao:1,  _primaryAttr: 'carisma' },
-  ranger:   { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:5, constituicao:1,  _primaryAttr: 'sabedoria' },
-  paladin:  { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:5,  _primaryAttr: 'constituicao' },
-};
-
-// ═══════════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════════
-let adventures = [BUILTIN_ADVENTURE, {
-  meta: {
-    id: "test-adventure",
-    title: "Campo de Testes",
-    author: "Sistema",
-    desc: "Aventura curta para testar escolhas, rolagens de atributo e sidequests. Sem enredo — só mecânicas.",
-    genre: "Teste",
-    icon: "🧪",
-    startNode: "t_start"
   },
-  nodes: {
-    "t_start": {
-      id: "t_start",
-      title: "Cruzamento",
-      text: "Você está num cruzamento de três caminhos. Não há nada de especial aqui — apenas uma pedra velha, um mercador sentado num toco, e o vento passando.\n\nEste é o Campo de Testes. Escolha um caminho para ver cada mecânica em ação.",
-      choices: [
-        { text: "Estrada da Esquerda — Teste de Atributo (com sucesso/falha)", next: "t_attr" },
-        { text: "Estrada do Meio — Escolha simples sem rolagem", next: "t_simple" },
-        { text: "Estrada da Direita — Levar ao fim da aventura", next: "t_end_neutral" }
-      ]
-    },
-    "t_attr": {
-      id: "t_attr",
-      title: "A Ponte Instável",
-      text: "Uma ponte de madeira velha atravessa um riacho. As tábuas rangem ao vento. Parece que aguenta — mas talvez não a um peso como o seu.\n\nVocê pode tentar atravessar com cuidado, forçando a travessia, ou simplesmente voltar.",
-      choices: [
-        { text: "Atravessar com agilidade (Teste de Destreza)", next: "t_attr_success", nextFail: "t_attr_fail", attrCheck: "destreza", difficulty: 4 },
-        { text: "Forçar a passagem (Teste de Força)", next: "t_attr_success", nextFail: "t_attr_fail", attrCheck: "forca", difficulty: 6 },
-        { text: "Voltar ao cruzamento", next: "t_start" }
-      ]
-    },
-    "t_attr_success": {
-      id: "t_attr_success",
-      title: "Passagem Segura",
-      text: "Você atravessa sem problemas. Do outro lado, um velho guerreiro aplaude com sarcasmo.\n\n«Impressionante. Uma ponte velha. Quero ver você fazer isso de olhos fechados.»\n\nVocê pode continuar adiante ou voltar ao cruzamento.",
-      choices: [
-        { text: "Continuar para o vilarejo além da ponte", next: "t_village" },
-        { text: "Voltar ao cruzamento", next: "t_start" }
-      ]
-    },
-    "t_attr_fail": {
-      id: "t_attr_fail",
-      title: "Molhado até os ossos",
-      text: "Uma tábua cede. Você cai no riacho — fundo na cintura, corrente forte.\n\nVocê sai do outro lado escorrendo, mas ileso. O velho guerreiro na margem ri sem piedade.\n\n«Pelo menos chegou lá.»",
-      choices: [
-        { text: "Continuar para o vilarejo, envergonhado mas vivo", next: "t_village" },
-        { text: "Voltar ao cruzamento com o orgulho machucado", next: "t_start" }
-      ]
-    },
-    "t_village": {
-      id: "t_village",
-      title: "O Pequeno Vilarejo",
-      text: "Um punhado de casas. Uma estalagem, uma ferraria, um poço.\n\nNada de extraordinário — exceto uma mulher velha na entrada que te olha com olhos muito atentos.\n\n«Aventureiro», ela diz, «você passou pela ponte. Isso significa que você não tem medo — ou não tem juízo. Em qualquer caso, poderia me fazer um favor?»",
-      choices: [
-        { text: "Escutá-la (a resposta dela aparecerá como sidequest, se configurada)", next: "t_end_neutral" },
-        { text: "Ignorar a velha e ir embora", next: "t_end_neutral" }
-      ]
-    },
-    "t_simple": {
-      id: "t_simple",
-      title: "A Taverna",
-      text: "A Taverna do Tonel Partido tem três mesas, uma lareira e um taberneiro com cara de poucos amigos.\n\nEle bota um copo na mesa sem você pedir.\n\n«Você bebe ou não bebe. Aqui não tem meio-termo.»",
-      choices: [
-        { text: "Beber. Sem hesitar.", next: "t_simple_drink" },
-        { text: "Recusar educadamente", next: "t_simple_refuse" }
-      ]
-    },
-    "t_simple_drink": {
-      id: "t_simple_drink",
-      title: "Sabor de Carvão e Mel",
-      text: "O líquido é escuro, quente e tem gosto de floresta. Não é ruim.\n\nO taberneiro acena com a cabeça, como se você tivesse passado num teste que não sabia que estava fazendo.\n\n«Você volta quando quiser», ele diz. É o mais próximo de um elogio que ele conhece.",
-      choices: [
-        { text: "Voltar ao cruzamento", next: "t_start" },
-        { text: "Terminar a aventura aqui — fim neutro", next: "t_end_neutral" }
-      ]
-    },
-    "t_simple_refuse": {
-      id: "t_simple_refuse",
-      title: "Sem Graça",
-      text: "O taberneiro recolhe o copo sem expressão.\n\n«Tudo bem», ele diz — mas claramente não é tudo bem.\n\nVocê fica sentado em silêncio por um tempo constrangedor antes de se levantar.",
-      choices: [
-        { text: "Voltar ao cruzamento", next: "t_start" },
-        { text: "Terminar a aventura aqui — fim neutro", next: "t_end_neutral" }
-      ]
-    },
-    "t_end_neutral": {
-      id: "t_end_neutral",
-      title: "Fim do Teste",
-      text: "Você chegou ao fim do Campo de Testes.\n\nSe sidequests foram configuradas nesta aventura, elas podem ter aparecido ao longo do caminho como escolhas naturais.\n\nOs sistemas testados: escolha simples, teste de atributo com sucesso e falha, cenas encadeadas, e sidequests integradas.",
-      choices: [],
-      ending: { type: "neutral", title: "Testes Concluídos" }
-    }
-  },
-  sidequests: [
+
+  "sidequests": [
     {
-      id: "sq_test_1",
-      title: "O Pergaminho Perdido",
-      desc: "Escutar o que a velha tem a dizer — ela parece saber de algo importante",
-      declineText: "Não há tempo para conversa com estranhos",
-      triggerNodes: ["t_start", "t_attr_success", "t_attr_fail"],
-      startNode: "sqt_intro",
-      nodes: {
-        "sqt_intro": {
-          id: "sqt_intro",
-          title: "O Pedido da Velha",
-          text: "A velha explica: perdeu um pergaminho importante perto da ponte. Provavelmente caiu quando o vento forte passou ontem.\n\nNão parece perigoso. Mas ela promete algo em troca — uma moeda ou dois, e uma bênção que ela diz valer mais que ouro.",
-          choices: [
-            { text: "Procurar o pergaminho com cuidado (Inteligência)", next: "sqt_found", nextFail: "sqt_fail", attrCheck: "inteligencia", difficulty: 3 },
-            { text: "Tentar a sorte — vasculhar tudo de qualquer jeito", next: "sqt_found", nextFail: "sqt_fail", attrCheck: "sorte", difficulty: 5 }
+      "id": "sq_ladrao_misericordioso",
+      "title": "O Ladrão de Pão",
+      "desc": "Um jovem ladrão foi capturado roubando comida para crianças presas pela névoa.",
+      "declineText": "Não há tempo para disputas de justiça agora.",
+      "triggerNodes": ["torre_letras", "catacumbas_entrada", "retorno_castelo"],
+      "startNode": "sq_l_inicio",
+      "nodes": {
+        "sq_l_inicio": {
+          "id": "sq_l_inicio",
+          "title": "O Julgamento do Ladrão",
+          "text": "Um guarda segura um jovem de uns dezesseis anos pelo colarinho. Uma bolsa de pão está espalhada no chão.\n\n«Ladrão!» grita o guarda. «Pego em flagrante na padaria do Mestre Grenn.»\n\nO rapaz — magro, assustado — te olha como se você fosse a última esperança.\n\n«As crianças na pensão estão com fome! A dona saiu ontem e não voltou. Eu só estava... eu só queria ajudar.»",
+          "choices": [
+            {
+              "text": "Interceder pelo jovem",
+              "attrCheck": "carisma",
+              "difficulty": 5,
+              "next": "sq_l_intercedeu",
+              "nextFail": "sq_l_falhou",
+              "pointsSuccess": 40
+            },
+            { "text": "Pagar a compensação pelo pão com seu próprio dinheiro", "next": "sq_l_pagou", "points": 30 },
+            { "text": "Ignorar a situação", "next": "sq_l_ignorou" }
           ]
         },
-        "sqt_found": {
-          id: "sqt_found",
-          title: "O Pergaminho",
-          text: "Você encontra o pergaminho enrolado sob uma pedra perto da margem. Ainda legível.\n\nA velha o recebe com mãos trêmulas. «É o registro de nascimento do meu neto», ela murmura. «Obrigada.»\n\nEla te passa uma moeda antiga e murmurar uma bênção que faz seus ombros ficarem mais leves.",
-          choices: [],
-          ending: { type: "victory", title: "O Pergaminho Devolvido" }
+        "sq_l_intercedeu": {
+          "id": "sq_l_intercedeu",
+          "title": "Palavras que Salvam",
+          "text": "Suas palavras sobre as crianças na pensão convencem o guarda — ou pelo menos o envergonham suficientemente.\n\nO jovem é liberado. Você o ajuda a levar o pão às crianças e no caminho ele te conta algo útil:\n\n«Vi dois homens de capa preta entrar no castelo ontem à noite pela porta dos fundos. Carregavam algo pesado num baú.»\n\nUma informação sobre os movimentos de Caldwin.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Misericórdia Justa" }
         },
-        "sqt_fail": {
-          id: "sqt_fail",
-          title: "Perdido para Sempre",
-          text: "Você vasculha a margem por um bom tempo — mas não encontra nada. O pergaminho deve ter sido levado pela correnteza.\n\nVocê volta com as mãos vazias. A velha fecha os olhos com tristeza.\n\n«Tudo bem», ela diz. «Não era culpa sua.»\n\nMas o peso da falha fica com você.",
-          choices: [],
-          ending: { type: "defeat", title: "Sem Notícias do Pergaminho" }
+        "sq_l_falhou": {
+          "id": "sq_l_falhou",
+          "title": "Sem Palavras Suficientes",
+          "text": "O guarda não cede. O jovem é levado preso.\n\nAs crianças na pensão ficam sem comida por mais um dia.\n\nVocê carrega o peso de uma intervenção mal-sucedida.",
+          "choices": [],
+          "ending": { "type": "defeat", "title": "Intenção sem Resultado" }
+        },
+        "sq_l_pagou": {
+          "id": "sq_l_pagou",
+          "title": "Generosidade Prática",
+          "text": "Você compra o pão roubado e o dá ao jovem para levar às crianças.\n\nNão é heroico. É simplesmente certo. O rapaz te olha com gratidão genuína e passa uma informação sobre o castelo como gratidão.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Bem Feito sem Glória" }
+        },
+        "sq_l_ignorou": {
+          "id": "sq_l_ignorou",
+          "title": "Olhos Fechados",
+          "text": "Você passa reto. A voz do jovem se afasta atrás de você.\n\nÉ uma coisa pequena. Mas pequenas coisas constroem o caráter.",
+          "choices": [],
+          "ending": { "type": "neutral", "title": "Indiferença" }
         }
-      },
-      attrRewards: { forca: 0, destreza: 0, inteligencia: 1, carisma: 1, sabedoria: 0, constituicao: 0 },
-      failDebuffs:  { forca: 0, destreza: 0, inteligencia: 0, carisma: -1, sabedoria: -1, constituicao: 0 },
-      failPenalty: true
+      }
+    },
+
+    {
+      "id": "sq_soldado_arrependido",
+      "title": "O Desertores da Névoa",
+      "desc": "Um soldado de Caldwin quer desertar — mas está com medo demais para agir sozinho.",
+      "declineText": "Não me envolvo em desertores.",
+      "triggerNodes": ["estrada_norte", "colinas_desvio", "batalha_estrada"],
+      "startNode": "sq_s_inicio",
+      "nodes": {
+        "sq_s_inicio": {
+          "id": "sq_s_inicio",
+          "title": "O Soldado no Matagal",
+          "text": "Na beira da estrada, escondido entre arbustos, um soldado de armadura com o emblema de Caldwin te faz sinal desesperado.\n\n«Por favor, não me denuncie. Eu sei o que Caldwin está fazendo. Vi coisas no castelo que não deveria ter visto.»\n\nEle está claramente aterrorizado. E tem informações.",
+          "choices": [
+            { "text": "Ouvir o que ele tem a dizer", "next": "sq_s_ouviu" },
+            {
+              "text": "Convencer o soldado a se juntar à sua causa",
+              "attrCheck": "carisma",
+              "difficulty": 6,
+              "next": "sq_s_aliado",
+              "nextFail": "sq_s_neutro",
+              "pointsSuccess": 60
+            },
+            { "text": "Recusar — um desertor não é confiável", "next": "sq_s_recusou" }
+          ]
+        },
+        "sq_s_ouviu": {
+          "id": "sq_s_ouviu",
+          "title": "Segredos do Castelo",
+          "text": "O soldado — nome Ren — foi recrutado há três meses. Mas nos últimos dias viu coisas que o perturbaram: prisioneiros levados ao porão e nunca mais vistos. A Pedra pulsando com luz violeta. E o Arauto — ele o viu duas vezes e cada vez dormiu mal por uma semana.\n\n«Tem uma guarda secreta no porão», ele sussurra. «Quatro homens que não dormem. Só dois na entrada principal.»\n\nInformações táticas valiosas.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "O Informante Temeroso" }
+        },
+        "sq_s_aliado": {
+          "id": "sq_s_aliado",
+          "title": "Um Reforço Inesperado",
+          "text": "Ren decide que a lealdade ao reino pesa mais que a lealdade a Caldwin.\n\nEle te acompanha — não como guerreiro, mas como guia. Conhece o castelo por dentro e pode levar você por rotas sem patrulha.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "O Desertor Redimido" }
+        },
+        "sq_s_neutro": {
+          "id": "sq_s_neutro",
+          "title": "Partida Solitária",
+          "text": "Ren não tem coragem suficiente para se comprometer. Ele desaparece na floresta, provavelmente tentando fugir da região.\n\nVocê fica sozinho com suas próprias forças.",
+          "choices": [],
+          "ending": { "type": "neutral", "title": "Caminhos Separados" }
+        },
+        "sq_s_recusou": {
+          "id": "sq_s_recusou",
+          "title": "Ceticismo",
+          "text": "Você passa reto, ignorando o soldado. Pode ter sido prudente. Pode ter sido um erro.\n\nNão há como saber agora.",
+          "choices": [],
+          "ending": { "type": "neutral", "title": "Desconfiança Útil" }
+        }
+      }
+    },
+
+    {
+      "id": "sq_espelho_bruxa",
+      "title": "A Vidente do Espelho Negro",
+      "desc": "Uma bruxa idosa na cidade oferece uma visão do futuro — mas há sempre um preço.",
+      "declineText": "Não me interessa bruxaria.",
+      "triggerNodes": ["prologo", "mesoneiro_info", "torre_letras", "busca_lyria"],
+      "startNode": "sq_e_inicio",
+      "nodes": {
+        "sq_e_inicio": {
+          "id": "sq_e_inicio",
+          "title": "A Velha do Espelho",
+          "text": "Uma porta entreaberta, uma vela. Uma anciã de cabelos brancos te chama sem que você tenha batido.\n\n«Entra, {{nome}}. Sei o que você precisa.»\n\nEla tem um espelho negro na parede — não reflete nada. É como um buraco na realidade.\n\n«Posso mostrar o que você vai enfrentar. O caminho mais curto para o coração do porão. Mas o espelho cobra seu preço — uma lembrança. Só uma. Você escolhe qual.»",
+          "choices": [
+            { "text": "Aceitar — dar uma lembrança de infância", "next": "sq_e_aceitou_infancia", "sanidade": -1 },
+            { "text": "Aceitar — dar uma lembrança dolorosa (que você não quer de volta)", "next": "sq_e_aceitou_dor" },
+            {
+              "text": "Tentar enganar o espelho — dar uma falsa memória",
+              "attrCheck": "inteligencia",
+              "difficulty": 8,
+              "next": "sq_e_enganou",
+              "nextFail": "sq_e_falhou_engano",
+              "pointsSuccess": 80
+            },
+            { "text": "Recusar — não há preço que valha uma memória", "next": "sq_e_recusou" }
+          ]
+        },
+        "sq_e_aceitou_infancia": {
+          "id": "sq_e_aceitou_infancia",
+          "title": "O Que Foi Dado",
+          "text": "O espelho bebe uma memória — você lembra que havia algo, uma tarde, uma voz — mas os detalhes escorregam como água.\n\nEm troca, o espelho mostra: o porão do castelo, a Pedra, o Arauto — e uma fraqueza. Uma runa de contenção no lado norte da câmara. Se destruída, enfraquece o Arauto dramaticamente.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Preço de Sabedoria" }
+        },
+        "sq_e_aceitou_dor": {
+          "id": "sq_e_aceitou_dor",
+          "title": "Alívio e Revelação",
+          "text": "Você oferece uma memória de dor — algo que carregou e não queria mais. O espelho a bebe com prazer.\n\nA vidente sorri com tristeza.\n\n«O espelho gosta de dor. Você se saiu bem.»\n\nA visão mostra o porão e seus segredos — incluindo uma fraqueza do Arauto e o caminho exato para a Pedra.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Dor Transformada em Sabedoria" }
+        },
+        "sq_e_enganou": {
+          "id": "sq_e_enganou",
+          "title": "O Truque do Mentiroso",
+          "text": "Você constrói uma memória falsa — tão vívida e emocional que o espelho a aceita sem questionar.\n\nA vidente ri.\n\n«Criativo. E raro.» Ela acena com aprovação. «Sua visão, sem custo real.»\n\nO espelho mostra tudo que você precisa saber sobre o porão.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Sabedoria sem Preço" }
+        },
+        "sq_e_falhou_engano": {
+          "id": "sq_e_falhou_engano",
+          "title": "Espelho Impaciente",
+          "text": "O espelho não aceita a falsidade. Ele toma uma memória real sem pedir permissão — uma boa, de quando você se sentiu mais vivo.\n\nMas dá a visão de qualquer jeito.\n\nA vidente te olha com piedade.",
+          "choices": [],
+          "ending": { "type": "neutral", "title": "Preço Cobrado à Força" }
+        },
+        "sq_e_recusou": {
+          "id": "sq_e_recusou",
+          "title": "Recusa Digna",
+          "text": "«Não dou memórias a espelhos», você diz.\n\nA velha sorri.\n\n«A recusa também é uma resposta. Você tem mais coragem em suas recusas que muitos têm em suas aceitações.»\n\nNenhuma visão. Mas nenhuma perda.",
+          "choices": [],
+          "ending": { "type": "neutral", "title": "Integridade" }
+        }
+      }
+    },
+
+    {
+      "id": "sq_arquivo_queimado",
+      "title": "Os Arquivos em Chamas",
+      "desc": "Alguém está tentando queimar os arquivos de Solenne — destruindo as provas do ritual.",
+      "declineText": "Não há tempo para isso agora.",
+      "triggerNodes": ["torre_letras", "solenne_plano", "solenne_culpado"],
+      "startNode": "sq_a_inicio",
+      "nodes": {
+        "sq_a_inicio": {
+          "id": "sq_a_inicio",
+          "title": "Fumaça da Torre",
+          "text": "Você vê fumaça saindo de uma janela da Torre das Letras. Solenne não está dentro — está na câmara principal.\n\nMas alguém está.\n\nVocê sobe as escadas correndo e encontra um homem de capa escura jogando óleo sobre pergaminhos e prestes a acender uma vela.",
+          "choices": [
+            {
+              "text": "Atacar o incendiário antes que acenda a vela",
+              "attrCheck": "destreza",
+              "difficulty": 6,
+              "next": "sq_a_deteve",
+              "nextFail": "sq_a_falhou",
+              "pointsSuccess": 60
+            },
+            {
+              "text": "Salvar os pergaminhos primeiro, deixar o homem fugir",
+              "next": "sq_a_salvou_arquivos",
+              "points": 40
+            }
+          ]
+        },
+        "sq_a_deteve": {
+          "id": "sq_a_deteve",
+          "title": "O Incendiário Preso",
+          "text": "Você chega a tempo. O homem é preso — e no interrogatório confirma ser um agente de Caldwin. Os arquivos estão seguros.\n\nSolenne examina os documentos salvos com mãos trêmulas de emoção.\n\n«Aqui», ela sussurra, apontando para um pergaminho antigo. «A fraqueza específica da Pedra de Aetherion. Com isso você sabe exatamente como desativá-la.»",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Guardião do Conhecimento" }
+        },
+        "sq_a_falhou": {
+          "id": "sq_a_falhou",
+          "title": "Cinzas do Passado",
+          "text": "O homem acende a vela antes que você chegue. Uma seção dos arquivos pega fogo antes de você conseguir apagar as chamas.\n\nO incendiário foge pela janela.\n\nAlgumas informações sobre a Pedra são perdidas para sempre.",
+          "choices": [],
+          "ending": { "type": "defeat", "title": "Perda Irreparável" }
+        },
+        "sq_a_salvou_arquivos": {
+          "id": "sq_a_salvou_arquivos",
+          "title": "Prioridade Correta",
+          "text": "Você ignora o homem e se concentra nos arquivos — carregando os pergaminhos mais perto do agente fora da janela antes que ele possa alcançá-los.\n\nO incendiário foge. Mas o conhecimento sobreviveu.\n\nSolenne examina o que foi salvo e encontra informações úteis sobre a composição da Pedra.",
+          "choices": [],
+          "ending": { "type": "victory", "title": "Conhecimento Preservado" }
+        }
+      }
+    }
+  ],
+
+  "randomEncounters": [
+    {
+      "id": "enc_viajante_ferido",
+      "title": "O Viajante na Estrada",
+      "type": "beneficial",
+      "icon": "🧳",
+      "weight": 2,
+      "once": true,
+      "text": "Um viajante solitário está sentado na beira do caminho, segurando o tornozelo com dor.\n\n«Torci o pé fugindo de uma patrulha de Caldwin. Se você puder me ajudar a chegar à próxima aldeia, posso compartilhar o que sei sobre o castelo.»\n\nVocê oferece ajuda. Em troca, ele te conta sobre uma passagem de serviço no lado leste do castelo, menos guardada do que a entrada principal.",
+      "vida": 1,
+      "points": 30,
+      "grantTags": ["conhece_passagem_leste"]
+    },
+    {
+      "id": "enc_corvo_mensageiro",
+      "title": "O Corvo das Sombras",
+      "type": "harmful",
+      "icon": "🐦‍⬛",
+      "weight": 1,
+      "once": true,
+      "text": "Um corvo de penas absolutamente negras pousa em seu ombro sem aviso. Seus olhos têm um brilho violeta.\n\nEle não é um corvo natural. Ele é um espiã do Arauto.\n\nA ave bica seu pescoço antes de você conseguir reagir e voa — mas você arranca uma pena enquanto vai embora.\n\nA pena é fria como metal. E quando você olha para ela, vê brevemente através dos olhos do Arauto — e sabe exatamente onde ele está agora.",
+      "vida": -1,
+      "sanidade": -1,
+      "points": 20,
+      "grantTags": ["viu_pelo_arauto"]
+    },
+    {
+      "id": "enc_criança_mensagem",
+      "title": "A Criança e o Bilhete",
+      "type": "beneficial",
+      "icon": "📜",
+      "weight": 3,
+      "once": true,
+      "text": "Uma menina de uns oito anos te para com um bilhete dobrado.\n\n«Um senhor velho me deu isso e disse para dar a você. Disse que você tem cabelo como o aventureiro da história da estalagem.»\n\nO bilhete é da Arquivista Solenne: *«Descobri a localização da runa de ancoragem do Arauto. Está no nível -2 do porão, parede norte. Destrua-a e o Arauto perde metade de sua força. — S.»*",
+      "points": 40,
+      "grantTags": ["conhece_runa_arauto"]
+    },
+    {
+      "id": "enc_fonte_envenenada",
+      "title": "A Fonte Negra",
+      "type": "harmful",
+      "icon": "⛲",
+      "weight": 2,
+      "text": "A névoa está especialmente densa ao redor de uma fonte na praça. Sem perceber, você bebe um pouco da água turva enquanto passa.\n\nO sabor é estranho — mineral e amargo. Você cospe, mas o dano já foi feito.\n\nA magia de Aetherion permeia a água da cidade. Seu estômago revira por um tempo.",
+      "vida": -2,
+      "sanidade": -1
+    },
+    {
+      "id": "enc_moeda_da_sorte",
+      "title": "A Moeda Dourada",
+      "type": "beneficial",
+      "icon": "🪙",
+      "weight": 2,
+      "text": "No meio do caminho, reluzindo no chão como se a névoa não conseguisse tocá-la, há uma moeda de ouro com uma face de rosto sorridente gravada.\n\nNão é moeda do reino. Não é de nenhum reino que você conhece.\n\nMas quando você a pega, sente um calor que sobe pelo braço — revigorante, como sol de manhã.",
+      "vida": 2,
+      "sanidade": 1,
+      "points": 15
+    },
+    {
+      "id": "enc_soldado_perdido",
+      "title": "O Soldado Tocado",
+      "type": "harmful",
+      "icon": "⚔️",
+      "weight": 2,
+      "text": "Um soldado de Caldwin, olhos meio-vazios pela névoa, te barra o caminho.\n\nEle não está completamente tomado — há ainda algo humano nele — mas está claramente não em si.\n\nEle tenta te atacar sem falar.",
+      "vida": -1,
+      "points": -10
+    },
+    {
+      "id": "enc_ervas_medicinais",
+      "title": "O Herbanário Surpresa",
+      "type": "beneficial",
+      "icon": "🌿",
+      "weight": 3,
+      "once": false,
+      "text": "Um idoso abre uma janela sobre você e joga um pacote embrulhado em pano.\n\n«São ervas de cura! Fiz estoques antes da névoa começar. Leve, aventureiro — você parece precisar mais do que eu!»\n\nO pacote contém cataplasmas medicinais que, ao aplicar, restauram alguma vitalidade.",
+      "vida": 2
+    },
+    {
+      "id": "enc_visao_arauto",
+      "title": "Sussurros na Névoa",
+      "type": "harmful",
+      "icon": "🌑",
+      "weight": 1,
+      "once": true,
+      "text": "A névoa condensa de repente ao seu redor. Por um instante — apenas um instante — você vê a forma do Arauto dentro dela, olhando diretamente para você.\n\n*«Você está interferindo»*, diz uma voz que não é ouvida, é sentida. *«Pare agora e saírá com vida.»*\n\nO Arauto sabe que você está vindo.",
+      "sanidade": -2,
+      "points": -5
+    },
+    {
+      "id": "enc_aldeao_informante",
+      "title": "O Aldeão que Viu Tudo",
+      "type": "beneficial",
+      "icon": "🧑",
+      "weight": 2,
+      "once": true,
+      "text": "Um aldeão nervoso te puxa para um beco.\n\n«Vi os homens de Caldwin transportando algo para o castelo na noite passada. Um baú com símbolos roxos. E um deles carregava o que parecia ser uma chave enorme — dourada, em formato de espiral.»\n\nVocê não sabe o que é a chave. Mas a informação fica guardada.",
+      "points": 25,
+      "grantTags": ["viu_chave_dourada"]
     }
   ]
-}];
+}
