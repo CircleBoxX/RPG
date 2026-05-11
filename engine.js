@@ -1519,11 +1519,21 @@ function checkSidequestTrigger(nodeId) {
   const sqs = currentAdventure?.sidequests || [];
   if (!sqs.length) return false;
 
-  // Find eligible sidequests: have this node as a trigger, not yet completed
-  const eligible = sqs.filter(sq =>
-    sq.triggerNodes && sq.triggerNodes.includes(nodeId) &&
-    !sq._completed
-  );
+  // Find eligible sidequests: have this node as a trigger, not yet completed,
+  // and pass tag conditions (requireTags / excludeTags)
+  const eligible = sqs.filter(sq => {
+    if (!sq.triggerNodes || !sq.triggerNodes.includes(nodeId)) return false;
+    if (sq._completed) return false;
+    // requireTags: ALL must be present
+    if (sq.requireTags?.length) {
+      if (!sq.requireTags.every(t => hasTag(t))) return false;
+    }
+    // excludeTags: NONE can be present
+    if (sq.excludeTags?.length) {
+      if (sq.excludeTags.some(t => hasTag(t))) return false;
+    }
+    return true;
+  });
   if (!eligible.length) return false;
 
   // Random chance
@@ -1752,9 +1762,15 @@ function endSidequest(success) {
   const sqScore = success ? (sq.scoreSuccess || 0) : (sq.scoreFail || 0);
   if (sqScore) addScore(sqScore, 'sidequest', `◈ ${sq.title}: ${success ? 'Concluída' : 'Fracassada'}`);
 
-  // Apply tag effects from sidequest
-  if (success && sq.victoryTagEffects) applyTagEffects(sq.victoryTagEffects);
-  if (!success && sq.defeatTagEffects)  applyTagEffects(sq.defeatTagEffects);
+  // Apply tag effects from sidequest — collect granted tags for the overlay
+  const grantedTags = [];
+  const tagEffectsToApply = success ? (sq.victoryTagEffects || []) : (sq.defeatTagEffects || []);
+  tagEffectsToApply.forEach(e => {
+    if (e && e.tag) {
+      grantedTags.push({ tag: e.tag, value: e.value !== false });
+    }
+  });
+  if (tagEffectsToApply.length) applyTagEffects(tagEffectsToApply);
 
   // Apply attribute rewards/penalties
   const rewards = sq.attrRewards || {};
@@ -1805,6 +1821,25 @@ function endSidequest(success) {
     }).join('');
   } else {
     changesEl.innerHTML = `<div style="color:var(--stone);font-style:italic;">${success ? 'Nenhuma alteração de atributos.' : 'A derrota não trouxe consequências imediatas.'}</div>`;
+  }
+
+  // Show granted/removed tags below attr changes
+  const tagsEl = document.getElementById('sq-tag-changes');
+  if (tagsEl) {
+    if (grantedTags.length) {
+      tagsEl.style.display = 'block';
+      tagsEl.innerHTML = grantedTags.map(t => {
+        const isGrant = t.value !== false;
+        const color  = isGrant ? '#9370db' : '#cc6666';
+        const prefix = isGrant ? '🏷 +' : '🏷 −';
+        return `<div class="sq-attr-change-row" style="opacity:0.85;">
+          <span style="color:${color};font-size:0.75rem;">${prefix} <em>${escHtmlRuntime(t.tag)}</em></span>
+        </div>`;
+      }).join('');
+    } else {
+      tagsEl.style.display = 'none';
+      tagsEl.innerHTML = '';
+    }
   }
 
   overlay.style.display = 'flex';
@@ -1968,6 +2003,27 @@ function renderSqEditor(sqId) {
       ${triggerCheckboxes}
     </div>
 
+    <div style="border:1px solid rgba(180,120,220,0.25);padding:0.8rem 1rem;margin-bottom:1.2rem;">
+      <div class="field-label" style="margin-bottom:0.5rem;color:#b080e0;">🏷 Condições de Tag para Aparecer</div>
+      <div style="font-size:0.7rem;color:var(--stone);font-style:italic;margin-bottom:0.7rem;">A missão só é oferecida se o jogador atender a estas condições no momento do gatilho.</div>
+      <div class="field-group" style="margin-bottom:0.5rem;">
+        <label class="field-label" style="font-size:0.62rem;">Requer estas tags (todas, separadas por vírgula)</label>
+        <input class="field-input" placeholder="ex: conheceu_mira, sabe_sindicato"
+          value="${escHtml((sq.requireTags||[]).join(', '))}"
+          onchange="updateSqTagList('${sqId}','requireTags',this.value)"
+          style="border-color:rgba(68,170,136,0.35);">
+        <div style="font-size:0.6rem;color:var(--stone);margin-top:0.2rem;">Vazio = sem restrição de tags obrigatórias.</div>
+      </div>
+      <div class="field-group" style="margin:0;">
+        <label class="field-label" style="font-size:0.62rem;">Bloqueada se o jogador tiver estas tags (qualquer, separadas por vírgula)</label>
+        <input class="field-input" placeholder="ex: sq_ja_feita, kael_preso"
+          value="${escHtml((sq.excludeTags||[]).join(', '))}"
+          onchange="updateSqTagList('${sqId}','excludeTags',this.value)"
+          style="border-color:rgba(204,68,68,0.35);">
+        <div style="font-size:0.6rem;color:var(--stone);margin-top:0.2rem;">Vazio = sem bloqueio por tag.</div>
+      </div>
+    </div>
+
     <div style="border:1px solid rgba(201,162,39,0.15);padding:0.8rem 1rem;margin-bottom:1.2rem;">
       <div class="field-label" style="margin-bottom:0.6rem;color:#c8a8ff;">Recompensas (Sucesso)</div>
       <div style="font-size:0.7rem;color:var(--stone);font-style:italic;margin-bottom:0.6rem;">Valores positivos = bônus. Negativos = penalidade. Zero = sem efeito.</div>
@@ -1983,6 +2039,23 @@ function renderSqEditor(sqId) {
           <span style="font-size:0.6rem;color:#cc6666;">Falha:</span>
           <input class="points-mini-input" type="number" value="${sq.scoreFail||0}" min="-9999" max="99999"
             onchange="updateSq('${sqId}','scoreFail',+this.value)" style="border-color:rgba(204,68,68,0.5);">
+        </div>
+      </div>
+      <div style="margin-top:0.8rem;border-top:1px dashed rgba(180,120,220,0.2);padding-top:0.7rem;">
+        <div style="font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;color:#b080e0;text-transform:uppercase;margin-bottom:0.45rem;">🏷 Tags Concedidas</div>
+        <div class="field-group" style="margin-bottom:0.4rem;">
+          <label class="field-label" style="font-size:0.6rem;">Ao concluir com <span style="color:#4a8;">sucesso</span> (separadas por vírgula)</label>
+          <input class="field-input" placeholder="ex: ajudou_ferreiro, portao_aberto"
+            value="${escHtml((sq.victoryTagEffects||[]).filter(e=>e.value!==false).map(e=>e.tag).join(', '))}"
+            onchange="updateSqVictoryTags('${sqId}',this.value)"
+            style="border-color:rgba(68,170,136,0.35);">
+        </div>
+        <div class="field-group" style="margin:0;">
+          <label class="field-label" style="font-size:0.6rem;">Ao <span style="color:#cc6666;">falhar</span> (separadas por vírgula)</label>
+          <input class="field-input" placeholder="ex: falhou_missao, perdeu_aliado"
+            value="${escHtml((sq.defeatTagEffects||[]).filter(e=>e.value!==false).map(e=>e.tag).join(', '))}"
+            onchange="updateSqDefeatTags('${sqId}',this.value)"
+            style="border-color:rgba(204,68,68,0.35);">
         </div>
       </div>
     </div>
@@ -2090,6 +2163,34 @@ function updateSq(sqId, key, value) {
     document.getElementById('sq-editing-label').textContent = '◈ ' + (value || 'Sem título');
     renderSqList();
   }
+}
+
+// Parse comma-separated tag list into array and save to sq[field]
+function updateSqTagList(sqId, field, value) {
+  const sq = getSqs().find(s => s.id === sqId);
+  if (!sq) return;
+  sq[field] = value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+}
+
+// Build victoryTagEffects from comma-separated success tag string
+function updateSqVictoryTags(sqId, value) {
+  const sq = getSqs().find(s => s.id === sqId);
+  if (!sq) return;
+  // Keep any "remove" effects (value:false) that may exist, replace grants
+  const existing = (sq.victoryTagEffects || []).filter(e => e.value === false);
+  const grants = value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    .map(tag => ({ tag, value: true }));
+  sq.victoryTagEffects = [...grants, ...existing];
+}
+
+// Build defeatTagEffects from comma-separated defeat tag string
+function updateSqDefeatTags(sqId, value) {
+  const sq = getSqs().find(s => s.id === sqId);
+  if (!sq) return;
+  const existing = (sq.defeatTagEffects || []).filter(e => e.value === false);
+  const grants = value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    .map(tag => ({ tag, value: true }));
+  sq.defeatTagEffects = [...grants, ...existing];
 }
 
 function toggleSqTrigger(sqId, nodeId, checked) {
