@@ -114,27 +114,16 @@
     <!-- Class quick-pick -->
     <div class="attr-section" style="margin-bottom:1.2rem;">
       <div class="attr-points-label">
-        <span>Classe (distribuição sugerida)</span>
+        <span>Classe <span style="font-size:0.6rem;color:var(--stone);font-weight:normal;">(define o atributo principal)</span></span>
       </div>
-      <div class="char-class-grid">
-        <button class="class-btn" onclick="applyClass('warrior')" id="class-warrior">
-          <span class="class-icon">⚔️</span>GUERREIRO
-        </button>
-        <button class="class-btn" onclick="applyClass('rogue')" id="class-rogue">
-          <span class="class-icon">🗡️</span>LADINO
-        </button>
-        <button class="class-btn" onclick="applyClass('mage')" id="class-mage">
-          <span class="class-icon">📚</span>MAGO
-        </button>
-        <button class="class-btn" onclick="applyClass('bard')" id="class-bard">
-          <span class="class-icon">🎶</span>BARDO
-        </button>
-        <button class="class-btn" onclick="applyClass('ranger')" id="class-ranger">
-          <span class="class-icon">🏹</span>ARQUEIRO
-        </button>
-        <button class="class-btn" onclick="applyClass('paladin')" id="class-paladin">
-          <span class="class-icon">🛡️</span>PALADINO
-        </button>
+      <div class="char-class-grid" id="char-class-grid">
+        <!-- Renderizado por renderCharClasses() -->
+      </div>
+      <!-- Descrição da classe selecionada -->
+      <div id="class-desc-panel" style="display:none; margin-top:0.6rem; padding:0.5rem 0.8rem;
+           border:1px solid rgba(201,162,39,0.2); background:rgba(0,0,0,0.15);
+           font-family:'IM Fell English',serif; font-style:italic;
+           color:var(--stone-light); font-size:0.82rem; line-height:1.4;">
       </div>
     </div>
 
@@ -196,6 +185,8 @@
 
     <!-- Character HUD -->
     <div class="char-hud" id="char-hud" style="display:none;"></div>
+    <!-- Tags HUD -->
+    <div id="tags-hud" style="display:none;flex-wrap:wrap;gap:0.3rem;padding:0.3rem 1rem 0;"></div>
 
     <div class="story-card" id="story-card">
       <!-- BG position slot -->
@@ -236,6 +227,7 @@
       <span style="font-family:'Cinzel',serif; color:var(--gold); font-size:1rem; letter-spacing:0.1em;">✎ EDITOR DE AVENTURAS</span>
       <div style="display:flex;gap:0.8rem; flex-wrap:wrap;">
         <button class="btn-sm" style="border-color:#9370db;color:#c8a8ff;" onclick="openSqEditor()">◈ Sidequests</button>
+        <button class="btn-sm" style="border-color:#e8a44a;color:#f0c070;" onclick="openEncounterEditor()">🎲 Encontros</button>
         <button class="btn-sm" onclick="saveAdventureFromEditor()">💾 Salvar</button>
         <button class="btn-sm" onclick="exportAdventure()">↓ Exportar JSON</button>
         <button class="btn-sm" onclick="testAdventure()">▶ Testar</button>
@@ -301,6 +293,18 @@
     <div class="field-group">
       <label class="field-label">Descrição</label>
       <textarea class="field-textarea" id="meta-desc" placeholder="Descreva sua aventura em poucas linhas..." style="min-height:70px;"></textarea>
+    </div>
+
+    <!-- ── Classes Customizadas ── -->
+    <div style="margin-top:1.5rem; border-top:1px solid rgba(201,162,39,0.15); padding-top:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+        <span class="panel-header" style="border:none;padding:0;margin:0;font-size:0.8rem;">⚔ Classes do Personagem</span>
+        <button class="btn-sm" onclick="addCustomClass()">+ Nova Classe</button>
+      </div>
+      <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone);font-size:0.78rem;margin-bottom:0.8rem;">
+        Crie classes exclusivas para sua aventura com nome, ícone e distribuição de atributos. Deixe vazio para usar as 6 classes padrão do sistema.
+      </div>
+      <div id="class-editor-body"></div>
     </div>
   </div>
 </div>
@@ -465,6 +469,11 @@
         <span class="combat-action-label">Fugir</span>
         <span class="combat-action-sub" id="cb-flee-hint"></span>
       </button>
+      <button class="combat-action-btn special" id="cb-btn-special" onclick="combatAction('special')" style="display:none;border-color:#b080e0;color:#c8a8ff;">
+        <span class="combat-action-icon">✨</span>
+        <span class="combat-action-label" id="cb-special-label">Especial</span>
+        <span class="combat-action-sub">Ação de Tag</span>
+      </button>
     </div>
 
     <!-- Continue (after combat ends) -->
@@ -474,6 +483,57 @@
       <button class="btn-medieval" id="combat-continue-btn" onclick="closeCombat()">Continuar →</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ════════════════════════════════ ENCOUNTER EDITOR SCREEN ════════════════════════════════ -->
+<div id="screen-encounter-editor" class="screen" style="overflow-y:auto;">
+  <div style="max-width:1300px; margin:0 auto; padding: 1rem 1.5rem 0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.8rem;">
+      <button class="back-link" onclick="showScreen('screen-editor')">← Voltar ao Editor</button>
+      <span style="font-family:'Cinzel',serif; color:#f0c070; font-size:1rem; letter-spacing:0.1em;">🎲 EDITOR DE ENCONTROS ALEATÓRIOS</span>
+      <div style="display:flex;gap:0.8rem;">
+        <button class="btn-sm" style="border-color:#e8a44a;color:#f0c070;" onclick="addEncounter()">+ Novo Encontro</button>
+      </div>
+    </div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone-light);font-size:0.85rem;margin-bottom:1rem;padding:0.8rem 1rem;border:1px solid rgba(232,164,74,0.25);">
+      Encontros são eventos aleatórios que interrompem a jornada como uma nova cena — podem ser benéficos, neutros ou maléficos. O criador define o texto, os efeitos e em quais cenas eles podem surgir (ou deixa sem gatilho para que apareçam em qualquer cena). Cada jornada terá uma combinação única.
+    </div>
+  </div>
+
+  <div class="sq-editor-layout" style="padding:0 1.5rem;" id="enc-editor-layout">
+    <!-- LEFT: Encounter list -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(232,164,74,0.3);">
+        <span style="color:#f0c070;">Encontros</span>
+      </div>
+      <div class="panel-body" id="enc-list">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:1.5rem;font-size:0.85rem;">Nenhum encontro criado ainda.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Encounter editor -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(232,164,74,0.3);">
+        <span id="enc-editing-label" style="color:#f0c070;">Editar Encontro</span>
+        <button class="btn-sm red" onclick="deleteEncounter()">Excluir</button>
+      </div>
+      <div class="panel-body" id="enc-node-editor">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:2rem;">Selecione ou crie um encontro.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Encounter Overlay (exibido durante o jogo) -->
+<div id="encounter-overlay" class="encounter-overlay" style="display:none;">
+  <div class="encounter-box">
+    <div class="encounter-type-badge" id="enc-type-badge">🎲 Encontro</div>
+    <div class="encounter-icon" id="enc-icon">🌿</div>
+    <div class="encounter-title" id="enc-title">Título do Encontro</div>
+    <div class="encounter-text" id="enc-text"></div>
+    <div class="encounter-effects" id="enc-effects"></div>
+    <button class="btn-medieval" style="min-width:200px;" id="enc-continue-btn">Continuar →</button>
   </div>
 </div>
 
