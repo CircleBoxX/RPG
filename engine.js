@@ -20,9 +20,116 @@ let epilogueLog = {
 let character = {
   name: '',
   attrs: { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:1 },
-  vida: 6, vidaMax: 6,
-  sanidade: 6, sanidadeMax: 6,
+  vida: 3, vidaMax: 3,           // vida da jornada — baixa e escassa, persiste entre combates
+  sanidade: 3, sanidadeMax: 3,   // sanidade da jornada — idem
+  vidaCombate: 18, vidaCombateMax: 18, // vida de combate — grande, reseta a cada combate
+  tags: {},          // { tagName: true/false } — set of active tags
+  classKey: '',      // key/index of chosen class
+  primaryAttr: '',   // primary attribute of chosen class (e.g. 'forca')
 };
+
+// ═══════════════════════════════════════════════════════════
+//  TAG SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// Set or remove a tag on the player character
+function setTag(tagName, value) {
+  if (!tagName) return;
+  const key = tagName.trim().toLowerCase();
+  if (value === false || value === null || value === undefined || value === '' || value === 'false') {
+    delete character.tags[key];
+  } else {
+    character.tags[key] = true;
+  }
+  renderTagsHud();
+}
+
+// Check if player has a tag
+function hasTag(tagName) {
+  if (!tagName) return false;
+  return !!character.tags[tagName.trim().toLowerCase()];
+}
+
+// Apply an array of tag-set instructions: [{tag, value}]
+function applyTagEffects(tagEffects) {
+  if (!Array.isArray(tagEffects)) return;
+  tagEffects.forEach(e => {
+    if (e && e.tag) setTag(e.tag, e.value !== false);
+  });
+}
+
+// Render mini tag display in HUD
+function renderTagsHud() {
+  let el = document.getElementById('tags-hud');
+  if (!el) return;
+  const keys = Object.keys(character.tags);
+  if (!keys.length) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = keys.map(k =>
+    `<span class="tag-chip">${escHtmlRuntime(k)}</span>`
+  ).join('');
+}
+
+// Evaluate choice tag rules — returns: 'show' | 'hide' | 'disabled'
+// choice.tagRules = [ { tag, mode:'show'|'hide'|'disable'|'redirect', redirectNode, invert } ]
+function evalChoiceTagVisibility(choice) {
+  if (!choice.tagRules || !choice.tagRules.length) return 'show';
+  for (const rule of choice.tagRules) {
+    const present = hasTag(rule.tag);
+    const matches = rule.invert ? !present : present;
+    if (!matches) continue;
+    if (rule.mode === 'hide')     return 'hide';
+    if (rule.mode === 'disable')  return 'disabled';
+    // 'show' rules just keep showing (default)
+  }
+  return 'show';
+}
+
+// Get redirect node from tag rules (first matching redirect rule)
+function evalChoiceTagRedirect(choice) {
+  if (!choice.tagRules || !choice.tagRules.length) return null;
+  for (const rule of choice.tagRules) {
+    const present = hasTag(rule.tag);
+    const matches = rule.invert ? !present : present;
+    if (matches && rule.mode === 'redirect' && rule.redirectNode) {
+      return rule.redirectNode;
+    }
+  }
+  return null;
+}
+
+// Apply combat tag modifiers to a combat cfg (returns a new modified copy)
+function applyCombatTagModifiers(cfg) {
+  if (!cfg.tagModifiers || !cfg.tagModifiers.length) return cfg;
+  // Deep copy to avoid mutating the original
+  const modified = JSON.parse(JSON.stringify(cfg));
+  for (const mod of cfg.tagModifiers) {
+    const present = hasTag(mod.tag);
+    const matches = mod.invert ? !present : present;
+    if (!matches) continue;
+    // skipToVictory: auto-win
+    if (mod.skipToVictory) {
+      modified._skipToVictory = true;
+    }
+    // Attribute modifiers on the enemy
+    if (mod.attrDeltas) {
+      if (!modified.attrs) modified.attrs = {};
+      for (const [attr, delta] of Object.entries(mod.attrDeltas)) {
+        modified.attrs[attr] = Math.max(1, (modified.attrs[attr] || 1) + delta);
+      }
+    }
+    // Vida modifier
+    if (mod.vidaDelta) {
+      modified.vidaMax = Math.max(1, (modified.vidaMax || 8) + mod.vidaDelta);
+      modified.vida    = modified.vidaMax;
+    }
+    // Special action unlock
+    if (mod.specialAction) {
+      modified._specialAction = mod.specialAction;
+    }
+  }
+  return modified;
+}
 let pendingAdventure = null; // adventure waiting for character creation
 
 // Editor state
@@ -117,9 +224,10 @@ function showScreen(id) {
   if (id === 'screen-select') renderAdventureGrid();
   if (id === 'screen-editor') renderEditor();
   if (id === 'screen-sq-editor') { renderSqList(); if (selectedSqId) renderSqEditor(selectedSqId); }
+  if (id === 'screen-encounter-editor') { renderEncList(); if (selectedEncId) renderEncEditor(selectedEncId); }
   if (id === 'screen-char') {
     document.getElementById('char-name').value = character.name || '';
-    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
+    renderCharClasses();
     renderAttrRows();
   }
 }
@@ -265,16 +373,19 @@ function restartCurrentAdventure() {
   sceneCount = 0;
   history = [];
   epilogueLog = { mainEnding: null, sqResults: [], totalChoices: 0, sqCompleted: 0 };
+  character.tags = {};
   // Reset SQ completion flags
   if (currentAdventure.sidequests) {
     currentAdventure.sidequests.forEach(sq => { delete sq._completed; });
   }
+  resetEncounterFlags();
   resetScore();
   renderCharHud();
   renderScene(currentNodeId);
 }
 
 // ── Text interpolation: {{nome}}, {{forca}}, {{destreza}}, etc.
+// Returns plain values — sem tags <em> para não poluir o diálogo visualmente.
 function interpolateText(text) {
   if (!text) return text;
   const attrLabels = {
@@ -282,13 +393,17 @@ function interpolateText(text) {
     carisma: 'Carisma', sabedoria: 'Sabedoria', constituicao: 'Constituição'
   };
   return text
-    .replace(/\{\{nome\}\}/gi, `<em>${character.name || 'Aventureiro'}</em>`)
+    .replace(/\{\{nome\}\}/gi, escHtmlRuntime(character.name || 'Aventureiro'))
     .replace(/\{\{(\w+)\}\}/gi, (_, key) => {
       const k = key.toLowerCase();
+      // Retorna o valor numérico do atributo diretamente
       if (character.attrs[k] !== undefined) {
-        return `<em>${character.attrs[k]}</em>`;
+        return String(character.attrs[k]);
       }
-      if (attrLabels[k]) return `<em>${attrLabels[k]}</em>`;
+      // Retorna o nome do atributo se for só o nome (ex: {{Força}} sem valor)
+      if (attrLabels[k]) return attrLabels[k];
+      // Classe do personagem atual (se definida)
+      if (k === 'classe' && character.className) return escHtmlRuntime(character.className);
       return `{{${key}}}`;
     });
 }
@@ -296,11 +411,20 @@ function interpolateText(text) {
 function confirmCharAndStart() {
   const nameInput = document.getElementById('char-name').value.trim();
   character.name = nameInput || 'Aventureiro';
-  // Calcular vida e sanidade com base nos atributos finais
+  // Calcular vida e sanidade da jornada (baixas e escassas)
   character.vidaMax    = calcMaxVida(character.attrs);
   character.vida       = character.vidaMax;
   character.sanidadeMax = calcMaxSanidade(character.attrs);
   character.sanidade   = character.sanidadeMax;
+  // Calcular vida de combate (grande, reseta a cada combate)
+  character.vidaCombateMax = calcVidaCombate(character.attrs);
+  character.vidaCombate    = character.vidaCombateMax;
+  // Reset tags (keep class tag which was set during applyClass)
+  const classTags = {};
+  for (const [k,v] of Object.entries(character.tags)) {
+    if (k.startsWith('classe:')) classTags[k] = v;
+  }
+  character.tags = classTags;
   currentAdventure = pendingAdventure;
   currentNodeId = currentAdventure.meta.startNode;
   sceneCount = 0;
@@ -328,13 +452,13 @@ function renderCharHud() {
     `<div style="width:${pct}%;height:100%;background:${color};transition:width 0.4s;"></div></div>`;
 
   const statusHtml =
-    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;">` +
+    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Vida da jornada — escassa, persiste entre combates">` +
       `<div style="display:flex;align-items:center;gap:0.25rem;">` +
         `<span>❤️</span><span style="font-size:0.65rem;color:#e06060;">VID</span>` +
         `<span style="color:#ff8888;font-weight:700;">${character.vida}/${character.vidaMax}</span>` +
       `</div>${barStyle(vidaPct, '#cc4444')}` +
     `</div>` +
-    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;">` +
+    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Sanidade da jornada — escassa, persiste entre combates">` +
       `<div style="display:flex;align-items:center;gap:0.25rem;">` +
         `<span>🧠</span><span style="font-size:0.65rem;color:#9370db;">SAN</span>` +
         `<span style="color:#c8a8ff;font-weight:700;">${character.sanidade}/${character.sanidadeMax}</span>` +
@@ -345,6 +469,7 @@ function renderCharHud() {
     `<span style="color:var(--gold-light);font-family:'Cinzel',serif;font-size:0.75rem;margin-right:0.3rem;">${character.name}</span>` +
     ATTRS.map(a => `<div class="char-hud-attr">${a.icon} <span>${a.name.substring(0,3).toUpperCase()}</span><span>${character.attrs[a.key]}</span></div>`).join('') +
     statusHtml;
+  renderTagsHud();
 }
 
 // Modifica vida ou sanidade do personagem (+/- delta), atualiza o HUD e verifica morte/loucura
@@ -435,7 +560,10 @@ function renderScene(nodeId) {
       _renderSceneChoices(node, nodeId, choicesSection);
       // Check sidequest trigger (only on non-ending scenes, not during a sidequest)
       if (!node.ending && !activeSidequest) {
-        setTimeout(() => checkSidequestTrigger(nodeId), 600);
+        setTimeout(() => {
+          const sqTriggered = checkSidequestTrigger(nodeId);
+          if (!sqTriggered) checkEncounterTrigger(nodeId);
+        }, 600);
       }
     });
   }, 150);
@@ -468,8 +596,18 @@ function _renderSceneChoices(node, nodeId, choicesSection) {
       choicesSection.innerHTML = `<div class="choices-label">O que fazes?</div><div id="choices-list"></div>`;
       const cl = document.getElementById('choices-list');
       (node.choices || []).forEach((c, i) => {
+        // ── Tag visibility check ──
+        const visibility = evalChoiceTagVisibility(c);
+        if (visibility === 'hide') return; // completely hidden
+
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
+
+        if (visibility === 'disabled') {
+          btn.disabled = true;
+          btn.style.opacity = '0.4';
+          btn.style.cursor = 'not-allowed';
+        }
 
         let badge = '';
         if (c.attrCheck) {
@@ -486,9 +624,17 @@ function _renderSceneChoices(node, nodeId, choicesSection) {
           epilogueLog.totalChoices++;
           // Award base choice points
           if (c.points) addScore(c.points, 'choice', `Escolha: ${c.text.substring(0,30)}`);
+          // Apply tags from this choice
+          if (c.tagEffects) applyTagEffects(c.tagEffects);
           // Apply vida/sanidade changes from the choice itself (before roll)
           if (c.vida)     changeVida(c.vida);
           if (c.sanidade) changeSanidade(c.sanidade);
+          // Tag redirect overrides next
+          const redirect = evalChoiceTagRedirect(c);
+          if (redirect) {
+            renderScene(redirect);
+            return;
+          }
           if (c.attrCheck) {
             doAttrRoll(c);
           } else {
@@ -508,16 +654,19 @@ function renderAttrRows() {
   const pointsEl = document.getElementById('points-remaining');
   if (pointsEl) pointsEl.textContent = remaining + ' pontos restantes';
 
-  const previewVida     = calcMaxVida(character.attrs);
-  const previewSanidade = calcMaxSanidade(character.attrs);
+  const previewVida        = calcMaxVida(character.attrs);
+  const previewSanidade    = calcMaxSanidade(character.attrs);
+  const previewVidaCombate = calcVidaCombate(character.attrs);
 
   container.innerHTML = ATTRS.map(a => {
     const val = character.attrs[a.key];
     const fillPct = ((val - ATTR_MIN) / (ATTR_MAX - ATTR_MIN)) * 100;
     // Hint for constituicao and sabedoria showing derived stat
     let derivedHint = '';
-    if (a.key === 'constituicao') derivedHint = `<span style="color:#ff8888;font-size:0.6rem;margin-left:0.5rem;">❤️ Vida máx: ${previewVida}</span>`;
-    if (a.key === 'sabedoria')    derivedHint = `<span style="color:#c8a8ff;font-size:0.6rem;margin-left:0.5rem;">🧠 Sanidade máx: ${previewSanidade}</span>`;
+    if (a.key === 'constituicao') derivedHint =
+      `<span style="color:#ff8888;font-size:0.6rem;margin-left:0.5rem;">❤️ Vida: ${previewVida}</span>` +
+      `<span style="color:#e07070;font-size:0.6rem;margin-left:0.4rem;">⚔️ Combate: ${previewVidaCombate}</span>`;
+    if (a.key === 'sabedoria')    derivedHint = `<span style="color:#c8a8ff;font-size:0.6rem;margin-left:0.5rem;">🧠 Sanidade: ${previewSanidade}</span>`;
     return `
       <div class="attr-row">
         <div class="attr-icon">${a.icon}</div>
@@ -545,13 +694,83 @@ function changeAttr(key, delta) {
   renderAttrRows();
 }
 
+// applyClass: recebe index (classes customizadas) ou key string (classes padrão)
 function applyClass(cls) {
   document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('class-' + cls)?.classList.add('selected');
-  const preset = CLASS_PRESETS[cls];
-  if (!preset) return;
-  character.attrs = { ...preset };
-  renderAttrRows();
+  const btn = document.getElementById('class-' + cls);
+  if (btn) btn.classList.add('selected');
+
+  const customList = pendingAdventure?.meta?.classes;
+  let desc = '';
+
+  if (Array.isArray(customList) && customList.length > 0) {
+    const cc = customList[cls];
+    if (!cc) return;
+    character.className = cc.name || 'Aventureiro';
+    character.classKey  = String(cls);
+    character.primaryAttr = cc.primaryAttr || 'forca';
+    desc = cc.desc || '';
+    // Set class tag
+    setTag('classe:' + (cc.name || 'aventureiro').toLowerCase().replace(/\s+/g,'_'), true);
+    // Also set generic "classe" tag with the class name value (stored in tags as classe_<name>)
+    if (cc.tags && Array.isArray(cc.tags)) applyTagEffects(cc.tags);
+  } else {
+    const preset = CLASS_PRESETS[cls];
+    if (!preset) return;
+    character.className = cls;
+    character.classKey  = cls;
+    character.primaryAttr = preset._primaryAttr || preset.primaryAttr || 'forca';
+    setTag('classe:' + cls.toLowerCase(), true);
+  }
+
+  // Mostra descrição da classe se existir
+  const descPanel = document.getElementById('class-desc-panel');
+  if (descPanel) {
+    if (desc) {
+      descPanel.textContent = desc;
+      descPanel.style.display = 'block';
+    } else {
+      descPanel.style.display = 'none';
+    }
+  }
+  // Atributos NÃO são alterados — jogador distribui livremente
+}
+
+// Renderiza a grade de classes — usa lista customizada se a aventura tiver classes definidas
+function renderCharClasses() {
+  const descPanel = document.getElementById('class-desc-panel');
+  if (descPanel) descPanel.style.display = 'none';
+  const grid = document.getElementById('char-class-grid');
+  if (!grid) return;
+
+  const customList = pendingAdventure?.meta?.classes;
+
+  if (Array.isArray(customList) && customList.length > 0) {
+    // Classes da aventura: índice numérico como identificador do botão
+    grid.innerHTML = customList.map((cc, idx) => {
+      const desc = cc.desc ? escHtmlRuntime(cc.desc) : '';
+      return `
+        <button class="class-btn" onclick="applyClass(${idx})" id="class-${idx}" title="${desc}">
+          <span class="class-icon">${cc.icon || '⚔️'}</span>
+          <span>${escHtmlRuntime((cc.name || 'Classe').toUpperCase())}</span>
+        </button>`;
+    }).join('');
+  } else {
+    // Classes padrão do sistema — uma por atributo
+    const defaultClasses = [
+      { key: 'warrior', icon: '⚔️', label: 'GUERREIRO', primary: 'Força' },
+      { key: 'rogue',   icon: '🗡️', label: 'LADINO',    primary: 'Destreza' },
+      { key: 'mage',    icon: '📚', label: 'MAGO',       primary: 'Inteligência' },
+      { key: 'bard',    icon: '🎶', label: 'BARDO',      primary: 'Carisma' },
+      { key: 'ranger',  icon: '🏹', label: 'ARQUEIRO',   primary: 'Sabedoria' },
+      { key: 'paladin', icon: '🛡️', label: 'PALADINO',   primary: 'Constituição' },
+    ];
+    grid.innerHTML = defaultClasses.map(c => `
+      <button class="class-btn" onclick="applyClass('${c.key}')" id="class-${c.key}">
+        <span class="class-icon">${c.icon}</span>
+        <span>${c.label}</span>
+      </button>`).join('');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -695,6 +914,7 @@ function saveAdventureFromEditor() {
 function renderEditor() {
   syncMetaFromEditor();
   renderNodeList();
+  renderClassEditor();
   if (selectedNodeId && editorAdventure.nodes[selectedNodeId]) {
     renderNodeEditor(selectedNodeId);
   } else {
@@ -719,6 +939,260 @@ function syncMetaToEditor() {
   editorAdventure.meta.genre = document.getElementById('meta-genre').value;
 }
 
+// ═══════════════════════════════════════════════════════════
+//  CUSTOM CLASS EDITOR
+//  Cada classe: { name, icon, desc, primaryAttr }
+//  O atributo primário começa em 5 na criação; demais em 1.
+// ═══════════════════════════════════════════════════════════
+
+function getEditorClasses() {
+  if (!Array.isArray(editorAdventure.meta.classes)) editorAdventure.meta.classes = [];
+  return editorAdventure.meta.classes;
+}
+
+// Gera atributos: primário = 5, demais = 1
+function buildClassAttrs(primaryAttr) {
+  const attrs = {};
+  ATTRS.forEach(a => { attrs[a.key] = a.key === primaryAttr ? ATTR_MAX_CREATION : ATTR_MIN; });
+  return attrs;
+}
+
+function renderClassEditor() {
+  const container = document.getElementById('class-editor-body');
+  if (!container) return;
+  const classes = getEditorClasses();
+
+  if (classes.length === 0) {
+    container.innerHTML = `<div style="color:var(--stone);font-style:italic;font-size:0.82rem;padding:0.6rem 0;">
+      Nenhuma classe criada — o jogo usará as 6 classes padrão do sistema.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = classes.map((cc, idx) => {
+    return `
+      <div style="display:grid;grid-template-columns:52px 1fr auto;gap:0.5rem;align-items:start;
+                  border:1px solid rgba(201,162,39,0.18);padding:0.7rem;margin-bottom:0.5rem;background:rgba(0,0,0,0.12);">
+        <div>
+          <label class="field-label" style="font-size:0.58rem;">Ícone</label>
+          <input class="field-input" value="${escHtml(cc.icon||'⚔️')}"
+            style="text-align:center;font-size:1.3rem;padding:0.15rem;width:100%;"
+            oninput="updateCustomClass(${idx},'icon',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.35rem;">
+          <div>
+            <label class="field-label" style="font-size:0.58rem;">Nome</label>
+            <input class="field-input" value="${escHtml(cc.name||'Nova Classe')}"
+              oninput="updateCustomClass(${idx},'name',this.value)">
+          </div>
+          <div>
+            <label class="field-label" style="font-size:0.58rem;">Descrição <span style="color:var(--stone);font-weight:normal;">(aparece ao selecionar a classe)</span></label>
+            <input class="field-input" value="${escHtml(cc.desc||'')}"
+              placeholder="Ex: Especialista em furtividade e precisão..."
+              oninput="updateCustomClass(${idx},'desc',this.value)">
+          </div>
+          <div>
+            <label class="field-label" style="font-size:0.58rem;">Atributo Primário <span style="color:var(--stone);font-weight:normal;">(usado no ataque em combate)</span></label>
+            <select class="field-select" style="font-size:0.7rem;" onchange="updateCustomClass(${idx},'primaryAttr',this.value)">
+              ${ATTRS.map(a => `<option value="${a.key}" ${cc.primaryAttr===a.key?'selected':''}>${a.icon} ${a.name}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <button class="btn-sm red" style="margin-top:1.1rem;" onclick="deleteCustomClass(${idx})">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function addCustomClass() {
+  const classes = getEditorClasses();
+  classes.push({ name: 'Nova Classe', icon: '⚔️', desc: '' });
+  renderClassEditor();
+}
+function deleteCustomClass(idx) {
+  const classes = getEditorClasses();
+  classes.splice(idx, 1);
+  renderClassEditor();
+}
+
+function updateCustomClass(idx, field, value) {
+  const classes = getEditorClasses();
+  if (!classes[idx]) return;
+  classes[idx][field] = value;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TAG EDITOR HELPERS
+// ═══════════════════════════════════════════════════════════
+
+function buildChoiceTagRulesHtml(nodeId, choiceIdx, choice, allNodeIds) {
+  const rules = choice.tagRules || [];
+  if (!rules.length) return '<div style="font-size:0.65rem;color:var(--stone);font-style:italic;">Nenhuma regra.</div>';
+  return rules.map((rule, ri) => {
+    const modeOpts = ['show','hide','disable','redirect'].map(m =>
+      `<option value="${m}" ${rule.mode===m?'selected':''}>${{show:'Mostrar',hide:'Ocultar',disable:'Desabilitar',redirect:'Redirecionar'}[m]}</option>`
+    ).join('');
+    const redirectOpt = rule.mode === 'redirect' ? `
+      <select class="field-select" style="font-size:0.62rem;padding:0.15rem 0.3rem;" onchange="updateChoiceTagRule('${nodeId}',${choiceIdx},${ri},'redirectNode',this.value)">
+        <option value="">— Cena —</option>
+        ${allNodeIds.map(id=>`<option value="${id}" ${rule.redirectNode===id?'selected':''}>${escHtml(editorAdventure.nodes[id]?.title||id)}</option>`).join('')}
+      </select>` : '';
+    return `<div style="display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.25rem;background:rgba(100,60,160,0.08);padding:0.25rem 0.35rem;">
+      <span style="font-size:0.6rem;color:#b080e0;">SE</span>
+      <input class="field-input" style="width:100px;font-size:0.62rem;padding:0.15rem 0.3rem;" placeholder="tag" value="${escHtml(rule.tag||'')}"
+        onchange="updateChoiceTagRule('${nodeId}',${choiceIdx},${ri},'tag',this.value)">
+      <label style="display:flex;align-items:center;gap:0.2rem;font-size:0.6rem;color:var(--stone-light);">
+        <input type="checkbox" ${rule.invert?'checked':''} onchange="updateChoiceTagRule('${nodeId}',${choiceIdx},${ri},'invert',this.checked)"> ausente
+      </label>
+      <span style="font-size:0.6rem;color:#b080e0;">→</span>
+      <select class="field-select" style="font-size:0.62rem;padding:0.15rem 0.3rem;" onchange="updateChoiceTagRule('${nodeId}',${choiceIdx},${ri},'mode',this.value);renderNodeEditor('${nodeId}')">
+        ${modeOpts}
+      </select>
+      ${redirectOpt}
+      <button class="btn-sm red" style="font-size:0.55rem;padding:0.1rem 0.3rem;" onclick="removeChoiceTagRule('${nodeId}',${choiceIdx},${ri})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function updateChoiceTagGrants(nodeId, choiceIdx, value, isGrant) {
+  const choice = editorAdventure.nodes[nodeId]?.choices?.[choiceIdx];
+  if (!choice) return;
+  if (!choice.tagEffects) choice.tagEffects = [];
+  // Remove existing effects of this type (grant or remove)
+  choice.tagEffects = choice.tagEffects.filter(e => isGrant ? e.value === false : e.value !== false);
+  // Add new
+  const tags = value.split(',').map(t => t.trim()).filter(Boolean);
+  tags.forEach(tag => choice.tagEffects.push({ tag, value: isGrant ? true : false }));
+}
+
+function addChoiceTagRule(nodeId, choiceIdx) {
+  const choice = editorAdventure.nodes[nodeId]?.choices?.[choiceIdx];
+  if (!choice) return;
+  if (!choice.tagRules) choice.tagRules = [];
+  choice.tagRules.push({ tag: '', mode: 'hide', invert: false });
+  renderNodeEditor(nodeId);
+}
+
+function updateChoiceTagRule(nodeId, choiceIdx, ruleIdx, key, value) {
+  const choice = editorAdventure.nodes[nodeId]?.choices?.[choiceIdx];
+  if (!choice?.tagRules?.[ruleIdx]) return;
+  choice.tagRules[ruleIdx][key] = value;
+}
+
+function removeChoiceTagRule(nodeId, choiceIdx, ruleIdx) {
+  const choice = editorAdventure.nodes[nodeId]?.choices?.[choiceIdx];
+  if (!choice?.tagRules) return;
+  choice.tagRules.splice(ruleIdx, 1);
+  renderNodeEditor(nodeId);
+}
+
+// ─── Combat tag modifier editor ───
+function buildCombatTagModifiersHtml(nodeId, c, allNodeIds) {
+  const mods = (c.tagModifiers || []);
+  const attrKeys = ['forca','destreza','constituicao'];
+  const attrNames = {forca:'Força', destreza:'Destreza', constituicao:'Constituição'};
+
+  const modsHtml = mods.map((mod, mi) => {
+    const attrDeltaInputs = attrKeys.map(k => `
+      <div style="display:flex;align-items:center;gap:0.2rem;">
+        <span style="font-size:0.6rem;color:var(--stone-light);">${attrNames[k]}:</span>
+        <input class="points-mini-input" type="number" min="-9" max="9" value="${(mod.attrDeltas||{})[k]||0}"
+          onchange="updateCombatTagModAttr('${nodeId}',${mi},'${k}',+this.value)">
+      </div>`).join('');
+
+    return `<div style="background:rgba(100,60,160,0.08);border:1px dashed rgba(180,120,220,0.2);padding:0.4rem;margin-bottom:0.35rem;font-size:0.65rem;">
+      <div style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.3rem;">
+        <span style="color:#b080e0;font-size:0.6rem;">SE TAG</span>
+        <input class="field-input" style="width:110px;font-size:0.62rem;padding:0.15rem 0.3rem;" placeholder="nome da tag" value="${escHtml(mod.tag||'')}"
+          onchange="updateCombatTagMod('${nodeId}',${mi},'tag',this.value)">
+        <label style="display:flex;align-items:center;gap:0.2rem;font-size:0.6rem;color:var(--stone-light);">
+          <input type="checkbox" ${mod.invert?'checked':''} onchange="updateCombatTagMod('${nodeId}',${mi},'invert',this.checked)"> ausente
+        </label>
+        <button class="btn-sm red" style="font-size:0.55rem;padding:0.1rem 0.3rem;margin-left:auto;" onclick="removeCombatTagMod('${nodeId}',${mi})">✕</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;margin-bottom:0.25rem;">
+        ${attrDeltaInputs}
+        <div style="display:flex;align-items:center;gap:0.2rem;">
+          <span style="font-size:0.6rem;color:var(--stone-light);">Vida Δ:</span>
+          <input class="points-mini-input" type="number" min="-99" max="99" value="${mod.vidaDelta||0}"
+            onchange="updateCombatTagMod('${nodeId}',${mi},'vidaDelta',+this.value)">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:0.2rem;font-size:0.6rem;color:#7ecb8a;">
+          <input type="checkbox" ${mod.skipToVictory?'checked':''} onchange="updateCombatTagMod('${nodeId}',${mi},'skipToVictory',this.checked)"> Pular para vitória
+        </label>
+      </div>
+      <div style="margin-top:0.25rem;">
+        <span style="font-size:0.6rem;color:var(--stone-light);">Ação especial (nome):</span>
+        <input class="field-input" style="font-size:0.62rem;padding:0.15rem 0.3rem;" placeholder="Ex: Toque Sombrio"
+          value="${escHtml(mod.specialAction?.label||'')}"
+          onchange="updateCombatTagModSpecial('${nodeId}',${mi},'label',this.value)">
+        <span style="font-size:0.6rem;color:var(--stone-light);">Dano especial:</span>
+        <input class="points-mini-input" type="number" min="0" max="99" value="${mod.specialAction?.damage||5}"
+          onchange="updateCombatTagModSpecial('${nodeId}',${mi},'damage',+this.value)">
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="border-top:1px dashed rgba(180,120,220,0.2);margin-top:0.6rem;padding-top:0.5rem;">
+      <div style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.12em;color:#b080e0;text-transform:uppercase;margin-bottom:0.4rem;">🏷 Modificadores de Tag no Combate</div>
+      ${modsHtml || '<div style="font-size:0.65rem;color:var(--stone);font-style:italic;margin-bottom:0.3rem;">Nenhum modificador.</div>'}
+      <button class="btn-sm" style="font-size:0.6rem;" onclick="addCombatTagMod('${nodeId}')">+ Modificador de Tag</button>
+      <div style="margin-top:0.5rem;">
+        <div style="font-size:0.6rem;color:var(--stone-light);margin-bottom:0.2rem;">Tags ao vencer (separadas por vírgula):</div>
+        <input class="field-input" style="font-size:0.72rem;" placeholder="ex: VenceuGuarda, ChegouPorto"
+          value="${escHtml((c.victoryTagEffects||[]).map(e=>e.tag).join(', '))}"
+          onchange="updateCombatTagList('${nodeId}','victoryTagEffects',this.value)">
+        <div style="font-size:0.6rem;color:var(--stone-light);margin-bottom:0.2rem;margin-top:0.3rem;">Tags ao perder (separadas por vírgula):</div>
+        <input class="field-input" style="font-size:0.72rem;" placeholder="ex: FoiDerrotado"
+          value="${escHtml((c.defeatTagEffects||[]).map(e=>e.tag).join(', '))}"
+          onchange="updateCombatTagList('${nodeId}','defeatTagEffects',this.value)">
+      </div>
+    </div>`;
+}
+
+function addCombatTagMod(nodeId) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat) return;
+  if (!node.combat.tagModifiers) node.combat.tagModifiers = [];
+  node.combat.tagModifiers.push({ tag:'', invert:false, attrDeltas:{}, vidaDelta:0, skipToVictory:false });
+  renderNodeEditor(nodeId);
+}
+
+function removeCombatTagMod(nodeId, mi) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat?.tagModifiers) return;
+  node.combat.tagModifiers.splice(mi, 1);
+  renderNodeEditor(nodeId);
+}
+
+function updateCombatTagMod(nodeId, mi, key, value) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat?.tagModifiers?.[mi]) return;
+  node.combat.tagModifiers[mi][key] = value;
+}
+
+function updateCombatTagModAttr(nodeId, mi, attrKey, value) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat?.tagModifiers?.[mi]) return;
+  if (!node.combat.tagModifiers[mi].attrDeltas) node.combat.tagModifiers[mi].attrDeltas = {};
+  node.combat.tagModifiers[mi].attrDeltas[attrKey] = value;
+}
+
+function updateCombatTagModSpecial(nodeId, mi, key, value) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat?.tagModifiers?.[mi]) return;
+  if (!node.combat.tagModifiers[mi].specialAction) node.combat.tagModifiers[mi].specialAction = {label:'',damage:5};
+  node.combat.tagModifiers[mi].specialAction[key] = value;
+}
+
+function updateCombatTagList(nodeId, field, value) {
+  const node = editorAdventure.nodes[nodeId];
+  if (!node?.combat) return;
+  const tags = value.split(',').map(t=>t.trim()).filter(Boolean);
+  node.combat[field] = tags.map(tag => ({tag, value: true}));
+}
 function renderNodeList() {
   const list = document.getElementById('node-list');
   list.innerHTML = '';
@@ -850,6 +1324,27 @@ function renderNodeEditor(nodeId) {
               onchange="updateChoice('${nodeId}',${i},'sanidadeFail',+this.value)" style="border-color:rgba(204,100,68,0.4);">
           </div>` : ''}
         </div>
+      </div>
+      <!-- ── Tags desta Escolha ── -->
+      <div style="border-top:1px dashed rgba(180,120,220,0.2);padding-top:0.5rem;margin-top:0.3rem;">
+        <div style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.12em;color:#b080e0;text-transform:uppercase;margin-bottom:0.4rem;">🏷 Tags</div>
+        <!-- Tag Effects: atribuir tags ao escolher -->
+        <div style="margin-bottom:0.4rem;">
+          <div style="font-size:0.6rem;color:var(--stone-light);margin-bottom:0.25rem;">Atribuir tags ao escolher (separadas por vírgula):</div>
+          <input class="field-input" style="font-size:0.72rem;" placeholder="ex: PossuiChave, CompletoSidequest1"
+            value="${escHtml((c.tagEffects||[]).filter(e=>e.value!==false).map(e=>e.tag).join(', '))}"
+            onchange="updateChoiceTagGrants('${nodeId}',${i},this.value,true)">
+        </div>
+        <div style="margin-bottom:0.4rem;">
+          <div style="font-size:0.6rem;color:var(--stone-light);margin-bottom:0.25rem;">Remover tags ao escolher (separadas por vírgula):</div>
+          <input class="field-input" style="font-size:0.72rem;" placeholder="ex: PossuiChave"
+            value="${escHtml((c.tagEffects||[]).filter(e=>e.value===false).map(e=>e.tag).join(', '))}"
+            onchange="updateChoiceTagGrants('${nodeId}',${i},this.value,false)">
+        </div>
+        <!-- Tag Rules: visibilidade baseada em tags -->
+        <div style="font-size:0.6rem;color:var(--stone-light);margin-bottom:0.25rem;">Regras de visibilidade por tag:</div>
+        ${buildChoiceTagRulesHtml(nodeId, i, c, allNodeIds)}
+        <button class="btn-sm" style="font-size:0.6rem;margin-top:0.3rem;" onclick="addChoiceTagRule('${nodeId}',${i})">+ Regra de Tag</button>
       </div>
     </div>
   `).join('');
@@ -1256,6 +1751,10 @@ function endSidequest(success) {
   // Award SQ score points
   const sqScore = success ? (sq.scoreSuccess || 0) : (sq.scoreFail || 0);
   if (sqScore) addScore(sqScore, 'sidequest', `◈ ${sq.title}: ${success ? 'Concluída' : 'Fracassada'}`);
+
+  // Apply tag effects from sidequest
+  if (success && sq.victoryTagEffects) applyTagEffects(sq.victoryTagEffects);
+  if (!success && sq.defeatTagEffects)  applyTagEffects(sq.defeatTagEffects);
 
   // Apply attribute rewards/penalties
   const rewards = sq.attrRewards || {};
@@ -1982,12 +2481,15 @@ function restartFromEpilogue() {
   if (currentAdventure.sidequests) {
     currentAdventure.sidequests.forEach(sq => { delete sq._completed; });
   }
+  resetEncounterFlags();
   // Reset character attrs to initial class preset if possible (or go to char screen)
   character.attrs = { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:1 };
   character.vidaMax = calcMaxVida(character.attrs);
   character.vida = character.vidaMax;
   character.sanidadeMax = calcMaxSanidade(character.attrs);
   character.sanidade = character.sanidadeMax;
+  character.vidaCombateMax = calcVidaCombate(character.attrs);
+  character.vidaCombate    = character.vidaCombateMax;
   pendingAdventure = currentAdventure;
   showScreen('screen-char');
 }
@@ -2316,14 +2818,15 @@ function defaultEnemy() {
   return {
     name: 'Inimigo',
     icon: '👹',
-    vida: 8,
-    vidaMax: 8,
+    vida: 30,
+    vidaMax: 30,
     attrs: { forca: 3, destreza: 2, constituicao: 2 },
     xpReward: 0,
     fleeAllowed: true,
-    defeatNode: '',   // cena ao perder o combate
-    victoryNode: '',  // cena ao vencer
-    fleeNode: '',     // cena ao fugir (vazio = victoryNode)
+    defeatPenalty: 1,  // vida da jornada perdida ao ser derrotado (0 = sem penalidade)
+    defeatNode: '',    // cena ao perder o combate
+    victoryNode: '',   // cena ao vencer
+    fleeNode: '',      // cena ao fugir (vazio = victoryNode)
     victoryText: '',
     defeatText: '',
     fleeText: '',
@@ -2337,7 +2840,26 @@ function startCombat(nodeId) {
     : currentAdventure?.nodes[nodeId];
   if (!node || !node.combat) return;
 
-  const cfg = node.combat;
+  // Apply tag modifiers to a working copy of the combat config
+  const cfg = applyCombatTagModifiers(node.combat);
+
+  // ── Skip to victory if tag modifier says so ──
+  if (cfg._skipToVictory) {
+    notify(`⚔ ${cfg.name || 'Inimigo'} — vitória automática por habilidade!`);
+    setTimeout(() => {
+      const nextNode = cfg.victoryNode;
+      if (nextNode) {
+        if (activeSidequest && activeSidequest.nodes[nextNode]) renderSqScene(nextNode);
+        else if (currentAdventure?.nodes[nextNode]) renderScene(nextNode);
+      }
+    }, 800);
+    return;
+  }
+
+  // ── Determine player attack attribute (primaryAttr of class, fallback forca) ──
+  const playerAttackAttr = character.primaryAttr || 'forca';
+  const ATTR_NAMES = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
+  const ATTR_ICONS = { forca:'⚔️', destreza:'🗡️', inteligencia:'📚', carisma:'🎶', sabedoria:'🏹', constituicao:'🛡️' };
 
   combatState = {
     round: 1,
@@ -2347,7 +2869,12 @@ function startCombat(nodeId) {
     cfg,
     sourceNodeId: nodeId,
     ended: false,
+    playerAttackAttr,   // ← class primary attribute
+    specialAction: cfg._specialAction || null,
   };
+
+  // Resetar vida de combate do jogador a cada novo combate
+  character.vidaCombate    = character.vidaCombateMax;
 
   // Show overlay
   const overlay = document.getElementById('combat-overlay');
@@ -2359,11 +2886,14 @@ function startCombat(nodeId) {
   document.getElementById('cb-enemy-icon').textContent = cfg.icon || '👹';
   document.getElementById('cb-player-name').textContent = character.name || 'Herói';
 
-  // Player attrs shown
-  document.getElementById('cb-player-attrs').innerHTML =
-    `<div class="combat-attr-chip">⚔️ ${character.attrs.forca}</div>` +
-    `<div class="combat-attr-chip">🗡️ ${character.attrs.destreza}</div>` +
-    `<div class="combat-attr-chip">🛡️ ${character.attrs.constituicao}</div>`;
+  // Player attrs shown — highlight primary attack attr
+  const attrChips = ['forca','destreza','constituicao'].map(key => {
+    const icon = ATTR_ICONS[key] || '⚔️';
+    const val  = character.attrs[key];
+    const isPrimary = key === playerAttackAttr;
+    return `<div class="combat-attr-chip${isPrimary ? ' primary-attr' : ''}">${icon} ${val}${isPrimary ? ' ★' : ''}</div>`;
+  });
+  document.getElementById('cb-player-attrs').innerHTML = attrChips.join('');
 
   // Enemy attrs shown
   const ea = cfg.attrs || {};
@@ -2372,8 +2902,21 @@ function startCombat(nodeId) {
     `<div class="combat-attr-chip">🗡️ ${ea.destreza||1}</div>` +
     `<div class="combat-attr-chip">🛡️ ${ea.constituicao||1}</div>`;
 
-  // Attack hint (attribute used)
-  document.getElementById('cb-attack-hint').textContent = 'Força vs Destreza';
+  // Attack hint — show actual attribute used
+  const attackAttrName = ATTR_NAMES[playerAttackAttr] || playerAttackAttr;
+  document.getElementById('cb-attack-hint').textContent = `${attackAttrName} vs Destreza`;
+
+  // Special action button
+  const specialBtn = document.getElementById('cb-btn-special');
+  if (specialBtn) {
+    if (combatState.specialAction) {
+      specialBtn.style.display = '';
+      specialBtn.textContent = combatState.specialAction.label || '✨ Ação Especial';
+      specialBtn.title = combatState.specialAction.desc || '';
+    } else {
+      specialBtn.style.display = 'none';
+    }
+  }
 
   // Flee hint
   document.getElementById('cb-flee-hint').textContent =
@@ -2407,11 +2950,11 @@ function combatLog(msg, cls = '') {
 
 function updateCombatBars() {
   if (!combatState) return;
-  const vidaPct    = Math.max(0, Math.round((character.vida / character.vidaMax) * 100));
-  const enemyPct   = Math.max(0, Math.round((combatState.enemyVida / combatState.enemyVidaMax) * 100));
-  document.getElementById('cb-player-vida').textContent = `${character.vida}/${character.vidaMax}`;
+  const vidaCombatePct = Math.max(0, Math.round((character.vidaCombate / character.vidaCombateMax) * 100));
+  const enemyPct       = Math.max(0, Math.round((combatState.enemyVida / combatState.enemyVidaMax) * 100));
+  document.getElementById('cb-player-vida').textContent = `${character.vidaCombate}/${character.vidaCombateMax}`;
   document.getElementById('cb-enemy-vida').textContent  = `${combatState.enemyVida}/${combatState.enemyVidaMax}`;
-  document.getElementById('cb-player-vida-bar').style.width = vidaPct + '%';
+  document.getElementById('cb-player-vida-bar').style.width = vidaCombatePct + '%';
   document.getElementById('cb-enemy-vida-bar').style.width  = enemyPct + '%';
 }
 
@@ -2502,12 +3045,12 @@ async function enemyTurn() {
     await sleep(800);
     hideCombatRoll();
     shakeFighter('player');
-    character.vida = Math.max(0, character.vida - dmg);
+    character.vidaCombate = Math.max(0, character.vidaCombate - dmg);
     renderCharHud();
     updateCombatBars();
-    combatLog(`${cfg.name || 'Inimigo'} causa ${dmg} de dano. Sua vida: ${character.vida}/${character.vidaMax}`, 'enemy');
+    combatLog(`${cfg.name || 'Inimigo'} causa ${dmg} de dano. Sua vida de combate: ${character.vidaCombate}/${character.vidaCombateMax}`, 'enemy');
 
-    if (character.vida <= 0) {
+    if (character.vidaCombate <= 0) {
       await sleep(400);
       endCombat('lose');
       return;
@@ -2541,20 +3084,22 @@ async function combatAction(action) {
   if (action === 'attack') {
     combatLog(`Você ataca ${cfg.name || 'Inimigo'}!`, 'player');
 
-    // Player hit roll: player forca vs enemy destreza
-    const pForca = character.attrs.forca || 1;
+    // Player hit roll: use primary class attribute vs enemy destreza
+    const attackAttr = combatState.playerAttackAttr || 'forca';
+    const pAtk = character.attrs[attackAttr] || 1;
     const eDestreza = ea.destreza || 2;
+    const ATTR_NAMES2 = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
 
     const { roll, chance, success } = await showCombatRoll(
-      `Teste de Força (${pForca}) vs Destreza inimiga (${eDestreza})`,
-      pForca, eDestreza + 1
+      `Teste de ${ATTR_NAMES2[attackAttr]||attackAttr} (${pAtk}) vs Destreza inimiga (${eDestreza})`,
+      pAtk, eDestreza + 1
     );
 
     const resultEl = document.getElementById('combat-roll-result');
     const isCrit = roll <= Math.floor(chance * 0.15) + 1;
 
     if (success) {
-      const dmg = calcDamage(pForca, ea.destreza || 1, ea.constituicao || 1, false) + (isCrit ? 3 : 0);
+      const dmg = calcDamage(pAtk, ea.destreza || 1, ea.constituicao || 1, false) + (isCrit ? 3 : 0);
       if (isCrit) {
         resultEl.className = 'combat-roll-result crit';
         resultEl.textContent = `✦ CRÍTICO! ${dmg} de dano!`;
@@ -2590,6 +3135,29 @@ async function combatAction(action) {
     document.getElementById('cb-player-status').textContent = '🛡 Defendendo';
     combatLog(`Você assume postura defensiva — reduzindo o dano recebido.`, 'player');
     await sleep(400);
+    await enemyTurn();
+
+  } else if (action === 'special') {
+    // Special action unlocked by a tag modifier
+    const special = combatState.specialAction;
+    if (!special) return;
+    combatLog(`✨ ${special.label || 'Ação Especial'}! ${special.desc || ''}`, 'player');
+
+    // Special actions can deal bonus damage or debuff the enemy
+    const dmg = special.damage || 5;
+    combatState.enemyVida = Math.max(0, combatState.enemyVida - dmg);
+    updateCombatBars();
+    combatLog(`Causa ${dmg} de dano especial. Vida do inimigo: ${combatState.enemyVida}/${combatState.enemyVidaMax}`, 'player');
+    if (combatState.enemyVida <= 0) {
+      await sleep(400);
+      endCombat('win');
+      return;
+    }
+    // Special is one-use
+    combatState.specialAction = null;
+    const specialBtn = document.getElementById('cb-btn-special');
+    if (specialBtn) specialBtn.style.display = 'none';
+    await sleep(300);
     await enemyTurn();
 
   } else if (action === 'flee') {
@@ -2646,21 +3214,36 @@ function endCombat(outcome) {
     rewardsEl.textContent = cfg.victoryText || 'O inimigo foi derrotado.';
     combatLog('✦ VITÓRIA! O inimigo foi derrotado.', 'result-win');
     if (cfg.xpReward) addScore(cfg.xpReward, 'choice', `Combate: ${cfg.name}`);
+    if (cfg.victoryTagEffects) applyTagEffects(cfg.victoryTagEffects);
+
   } else if (outcome === 'lose') {
     resultEl.className = 'combat-end-result lose';
     resultEl.textContent = '💀 DERROTA 💀';
-    rewardsEl.textContent = cfg.defeatText || 'Você foi derrotado.';
-    combatLog('✦ DERROTA. Você sucumbiu em combate.', 'result-lose');
-    // Se a vida zerou, fechar o overlay de combate e acionar o sistema de morte
-    // sem esperar o clique do botão (evita dois overlays empilhados)
+
+    // Aplicar penalidade de vida da jornada configurada pelo criador (padrão: 1)
+    const penalty = (cfg.defeatPenalty != null) ? cfg.defeatPenalty : 1;
+    let penaltyText = '';
+    if (penalty > 0) {
+      character.vida = Math.max(0, character.vida - penalty);
+      renderCharHud();
+      penaltyText = ` Você perde ${penalty} de vida.`;
+    }
+
+    const defeatMsg = (cfg.defeatText || 'Você foi derrotado.') + penaltyText;
+    rewardsEl.textContent = defeatMsg;
+    combatLog(`✦ DERROTA. Você sucumbiu em combate.${penaltyText}`, 'result-lose');
+    if (cfg.defeatTagEffects) applyTagEffects(cfg.defeatTagEffects);
+
+    // Se a penalidade zerou a vida da jornada, aciona morte — mas só após fechar o overlay
     if (character.vida <= 0) {
       setTimeout(() => {
         document.getElementById('combat-overlay').style.display = 'none';
         combatState = null;
         triggerStatusDeath('vida');
-      }, 1200);
+      }, 1800);
       return;
     }
+
   } else if (outcome === 'flee') {
     resultEl.className = 'combat-end-result flee';
     resultEl.textContent = '💨 RECUOU';
@@ -2683,12 +3266,6 @@ function closeCombat() {
   if (outcome === 'flee')  nextNode = cfg.fleeNode || cfg.victoryNode;
 
   combatState = null;
-
-  // Se vida zerou, aciona sistema de morte (overlay de combate já foi fechado acima)
-  if (outcome === 'lose' && character.vida <= 0) {
-    triggerStatusDeath('vida');
-    return;
-  }
 
   if (nextNode) {
     if (activeSidequest && activeSidequest.nodes[nextNode]) {
@@ -2717,7 +3294,7 @@ function checkAndStartCombat(nodeId) {
       <div class="ending-type defeat" style="letter-spacing:0.3em;">⚔ COMBATE ⚔</div>
       <div class="ending-title" style="color:#e07070;font-size:1.2rem;">${escHtmlRuntime(node.combat.name || 'Inimigo')}</div>
       <div style="font-family:'IM Fell English',serif;color:var(--stone-light);font-size:0.9rem;font-style:italic;margin-bottom:1.5rem;">
-        Vida: ${node.combat.vidaMax || node.combat.vida || 8} &nbsp;·&nbsp; Força: ${node.combat.attrs?.forca||1} &nbsp;·&nbsp; Destreza: ${node.combat.attrs?.destreza||1}
+        Vida: ${node.combat.vidaMax || node.combat.vida || 30} &nbsp;·&nbsp; Força: ${node.combat.attrs?.forca||1} &nbsp;·&nbsp; Destreza: ${node.combat.attrs?.destreza||1}
       </div>
       <button class="btn-medieval" style="border-color:#cc4444;color:#e07070;margin:0 auto;" onclick="startCombat('${nodeId}')">⚔ Lutar</button>
     </div>`;
@@ -2794,12 +3371,21 @@ function buildCombatEditorHtml(nodeId, node, allNodeIds) {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
         <div class="field-group" style="margin:0;">
-          <label class="field-label" style="font-size:0.6rem;">❤️ Vida máxima</label>
-          <input class="field-input" type="number" min="1" max="999" value="${c.vidaMax||c.vida||8}" onchange="updateCombat('${nodeId}','vidaMax',+this.value);updateCombat('${nodeId}','vida',+this.value)">
+          <label class="field-label" style="font-size:0.6rem;">❤️ Vida máxima (combate)</label>
+          <input class="field-input" type="number" min="1" max="999" value="${c.vidaMax||c.vida||30}" onchange="updateCombat('${nodeId}','vidaMax',+this.value);updateCombat('${nodeId}','vida',+this.value)">
         </div>
         <div class="field-group" style="margin:0;">
           <label class="field-label" style="font-size:0.6rem;">⭐ Recompensa (pontos)</label>
           <input class="field-input" type="number" min="0" max="9999" value="${c.xpReward||0}" onchange="updateCombat('${nodeId}','xpReward',+this.value)">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+        <div class="field-group" style="margin:0;">
+          <label class="field-label" style="font-size:0.6rem;">💔 Penalidade ao perder (vida da jornada)</label>
+          <input class="field-input" type="number" min="0" max="99" value="${c.defeatPenalty ?? 1}" onchange="updateCombat('${nodeId}','defeatPenalty',+this.value)" title="Quantidade de vida da jornada perdida ao ser derrotado. 0 = sem penalidade.">
+        </div>
+        <div class="field-group" style="margin:0;display:flex;align-items:center;padding-top:1.1rem;">
+          <span style="font-size:0.65rem;color:var(--stone);font-style:italic;">Derrota no combate não mata — reduz a vida da jornada.</span>
         </div>
       </div>
       <div style="margin-bottom:0.6rem;">
@@ -2855,7 +3441,377 @@ function buildCombatEditorHtml(nodeId, node, allNodeIds) {
         </div>
       </div>
       ` : `<div style="color:var(--stone);font-size:0.78rem;font-style:italic;padding:0.4rem 0;">Ative para configurar um inimigo nesta cena.</div>`}
+      ${hasCombat ? buildCombatTagModifiersHtml(nodeId, c, allNodeIds) : ''}
     </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RANDOM ENCOUNTER SYSTEM
+//  Estrutura de um encontro:
+//  {
+//    id, title, icon, text,
+//    type: 'beneficial' | 'neutral' | 'harmful',
+//    weight: 1-10,          // peso relativo (mais peso = aparece mais)
+//    once: false,           // true = só aparece uma vez por jornada
+//    triggerNodes: [],      // cenas que podem disparar (vazio = qualquer cena)
+//    requireTags: [],       // tags que o jogador DEVE ter
+//    excludeTags: [],       // tags que impedem o encontro
+//    grantTags: [],         // tags concedidas ao resolver
+//    vida: 0,               // delta de vida da jornada (neg = dano)
+//    sanidade: 0,           // delta de sanidade
+//    attrDeltas: {},        // { forca:1, destreza:-1, ... }
+//    points: 0              // pontos de score
+//  }
+// ═══════════════════════════════════════════════════════════
+
+// ── Runtime state ──
+let activeEncounter = null;
+
+// Probability per eligible scene that AN encounter fires (pool is weighted)
+const ENC_APPEAR_CHANCE = 0.40; // 40% chance per eligible scene
+
+// Get encounter pool from current adventure
+function getEncounters() {
+  return currentAdventure?.randomEncounters || [];
+}
+
+// Check and possibly trigger a random encounter after entering a scene
+// Called from renderScene (main story only, not during sidequests or other encounters)
+function checkEncounterTrigger(nodeId) {
+  const pool = getEncounters();
+  if (!pool.length) return false;
+
+  // Build weighted eligible list
+  const eligible = pool.filter(enc => {
+    if (enc._usedOnce) return false;                               // already used once
+    if (enc.triggerNodes?.length && !enc.triggerNodes.includes(nodeId)) return false; // wrong scene
+    if (enc.requireTags?.length && !enc.requireTags.every(t => hasTag(t))) return false;
+    if (enc.excludeTags?.length &&  enc.excludeTags.some(t => hasTag(t))) return false;
+    return true;
+  });
+  if (!eligible.length) return false;
+
+  // Roll for trigger
+  if (Math.random() > ENC_APPEAR_CHANCE) return false;
+
+  // Weighted random pick
+  const totalWeight = eligible.reduce((s, e) => s + (e.weight || 1), 0);
+  let r = Math.random() * totalWeight;
+  let chosen = eligible[eligible.length - 1];
+  for (const enc of eligible) {
+    r -= (enc.weight || 1);
+    if (r <= 0) { chosen = enc; break; }
+  }
+
+  // Mark once-only encounters
+  if (chosen.once) chosen._usedOnce = true;
+
+  triggerEncounter(chosen, nodeId);
+  return true;
+}
+
+// Show the encounter overlay
+function triggerEncounter(enc, returnNodeId) {
+  activeEncounter = { enc, returnNodeId };
+
+  const overlay = document.getElementById('encounter-overlay');
+  const badge = document.getElementById('enc-type-badge');
+  const typeLabels = { beneficial: '✦ Encontro Benéfico', neutral: '🎲 Encontro', harmful: '⚠ Encontro Perigoso' };
+  const typeClass = enc.type || 'neutral';
+
+  badge.textContent = typeLabels[typeClass] || '🎲 Encontro';
+  badge.className = 'encounter-type-badge ' + typeClass;
+
+  document.getElementById('enc-icon').textContent = enc.icon || '🎲';
+  document.getElementById('enc-title').textContent = enc.title || 'Encontro';
+  document.getElementById('enc-text').innerHTML = interpolateText((enc.text || '').replace(/\n/g, '<br>'));
+
+  // Build effects chips
+  const effects = [];
+  if (enc.vida)    effects.push({ label: `❤️ Vida ${enc.vida > 0 ? '+' : ''}${enc.vida}`,     cls: enc.vida > 0 ? 'pos' : 'neg' });
+  if (enc.sanidade) effects.push({ label: `🧠 San ${enc.sanidade > 0 ? '+' : ''}${enc.sanidade}`, cls: enc.sanidade > 0 ? 'pos' : 'neg' });
+  if (enc.attrDeltas) {
+    const ANAMES = { forca:'Força', destreza:'Destreza', inteligencia:'Int', carisma:'Carisma', sabedoria:'Sab', constituicao:'Con' };
+    Object.entries(enc.attrDeltas).forEach(([k, v]) => {
+      if (v) effects.push({ label: `${ANAMES[k]||k} ${v>0?'+':''}${v}`, cls: v > 0 ? 'pos' : 'neg' });
+    });
+  }
+  if (enc.points) effects.push({ label: `⭐ ${enc.points > 0 ? '+' : ''}${enc.points} pts`, cls: enc.points > 0 ? 'pos' : 'neg' });
+  if (enc.grantTags?.length) enc.grantTags.forEach(t => effects.push({ label: `🏷 ${t}`, cls: 'tag' }));
+
+  const efEl = document.getElementById('enc-effects');
+  efEl.innerHTML = effects.map(e =>
+    `<span class="enc-effect-chip ${e.cls}">${escHtmlRuntime(e.label)}</span>`
+  ).join('');
+
+  // Flash banner briefly before overlay (cosmetic)
+  const flash = document.createElement('div');
+  flash.className = 'enc-hud-flash';
+  flash.textContent = '— Encontro —';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 2500);
+
+  overlay.style.display = 'flex';
+
+  document.getElementById('enc-continue-btn').onclick = () => {
+    overlay.style.display = 'none';
+    resolveEncounter();
+  };
+}
+
+// Apply encounter effects and return to story
+function resolveEncounter() {
+  if (!activeEncounter) return;
+  const { enc, returnNodeId } = activeEncounter;
+  activeEncounter = null;
+
+  // Apply effects
+  if (enc.vida)     changeVida(enc.vida);
+  if (enc.sanidade) changeSanidade(enc.sanidade);
+  if (enc.points)   addScore(enc.points, 'choice', `🎲 Encontro: ${enc.title}`);
+  if (enc.attrDeltas) {
+    Object.entries(enc.attrDeltas).forEach(([k, v]) => {
+      if (v && character.attrs[k] !== undefined) {
+        character.attrs[k] = Math.max(1, Math.min(ATTR_MAX, character.attrs[k] + v));
+      }
+    });
+    renderCharHud();
+  }
+  if (enc.grantTags?.length) {
+    enc.grantTags.forEach(t => setTag(t, true));
+  }
+}
+
+// ── Reset encounter once-flags on adventure restart ──
+function resetEncounterFlags() {
+  const pool = currentAdventure?.randomEncounters || [];
+  pool.forEach(enc => { delete enc._usedOnce; });
+}
+
+// ══════════════════════════════════════════════
+//  ENCOUNTER EDITOR
+// ══════════════════════════════════════════════
+
+let selectedEncId = null;
+
+function getEditorEncounters() {
+  if (!editorAdventure.randomEncounters) editorAdventure.randomEncounters = [];
+  return editorAdventure.randomEncounters;
+}
+
+function openEncounterEditor() {
+  syncMetaToEditor();
+  showScreen('screen-encounter-editor');
+  renderEncList();
+  if (selectedEncId) renderEncEditor(selectedEncId);
+}
+
+function renderEncList() {
+  const list = document.getElementById('enc-list');
+  const encs = getEditorEncounters();
+  if (!encs.length) {
+    list.innerHTML = '<div style="color:var(--stone);font-style:italic;text-align:center;padding:1.5rem;font-size:0.85rem;">Nenhum encontro criado ainda.</div>';
+    return;
+  }
+  const typeIcons = { beneficial: '✦', neutral: '🎲', harmful: '⚠' };
+  list.innerHTML = encs.map(enc => {
+    const typeClass = enc.type || 'neutral';
+    return `<div class="enc-slot-item ${enc.id === selectedEncId ? 'selected' : ''}" onclick="selectEnc('${enc.id}')">
+      <div class="enc-slot-title">${typeIcons[typeClass]||'🎲'} ${escHtml(enc.title || '(sem título)')}</div>
+      <div class="enc-slot-type ${typeClass}">${{beneficial:'Benéfico',neutral:'Neutro',harmful:'Maléfico'}[typeClass]||'Neutro'}${enc.once?' · Único':''}${enc.weight > 1 ? ` · Peso ${enc.weight}`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectEnc(id) {
+  selectedEncId = id;
+  renderEncList();
+  renderEncEditor(id);
+}
+
+function addEncounter() {
+  const id = 'enc_' + Date.now();
+  getEditorEncounters().push({
+    id,
+    title: 'Novo Encontro',
+    icon: '🎲',
+    text: 'Descreva o que acontece durante este encontro...',
+    type: 'neutral',
+    weight: 1,
+    once: false,
+    triggerNodes: [],
+    requireTags: [],
+    excludeTags: [],
+    grantTags: [],
+    vida: 0,
+    sanidade: 0,
+    attrDeltas: {},
+    points: 0,
+  });
+  selectedEncId = id;
+  renderEncList();
+  renderEncEditor(id);
+}
+
+function deleteEncounter() {
+  if (!selectedEncId) return;
+  const encs = getEditorEncounters();
+  const idx = encs.findIndex(e => e.id === selectedEncId);
+  if (idx < 0) return;
+  encs.splice(idx, 1);
+  selectedEncId = encs[0]?.id || null;
+  renderEncList();
+  if (selectedEncId) renderEncEditor(selectedEncId);
+  else document.getElementById('enc-node-editor').innerHTML = '<div style="color:var(--stone);font-style:italic;text-align:center;padding:2rem;">Selecione ou crie um encontro.</div>';
+}
+
+function renderEncEditor(encId) {
+  const enc = getEditorEncounters().find(e => e.id === encId);
+  if (!enc) return;
+  document.getElementById('enc-editing-label').textContent = `🎲 ${enc.title || 'Sem título'}`;
+
+  const allMainNodes = Object.values(editorAdventure.nodes);
+  const ATTRS_ENC = ['forca','destreza','inteligencia','carisma','sabedoria','constituicao'];
+  const ATTR_NAMES_ENC = { forca:'⚔️ Força', destreza:'🗡️ Destreza', inteligencia:'📚 Int', carisma:'🎶 Carisma', sabedoria:'🏹 Sabedoria', constituicao:'🛡️ Con' };
+
+  const attrRows = ATTRS_ENC.map(k => {
+    const v = (enc.attrDeltas || {})[k] || 0;
+    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+    return `<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+      <span style="font-size:0.75rem;min-width:7rem;color:var(--parchment-dark);">${ATTR_NAMES_ENC[k]}</span>
+      <button class="reward-delta-btn neg" onclick="changeEncAttr('${encId}','${k}',-1)">−</button>
+      <span class="reward-val ${cls}" style="min-width:2rem;text-align:center;">${v > 0 ? '+' : ''}${v}</span>
+      <button class="reward-delta-btn" onclick="changeEncAttr('${encId}','${k}',1)">+</button>
+    </div>`;
+  }).join('');
+
+  const triggerChecks = allMainNodes.map(n => {
+    const checked = (enc.triggerNodes || []).includes(n.id);
+    return `<label style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--parchment-dark);margin-bottom:0.3rem;cursor:pointer;">
+      <input type="checkbox" value="${n.id}" ${checked ? 'checked' : ''} onchange="toggleEncTrigger('${encId}','${n.id}',this.checked)" style="accent-color:#e8a44a;">
+      <span>${escHtml(n.title || n.id)}</span>
+    </label>`;
+  }).join('') || '<div style="color:var(--stone);font-size:0.75rem;font-style:italic;">Crie cenas na história principal primeiro.</div>';
+
+  document.getElementById('enc-node-editor').innerHTML = `
+    <div class="field-group">
+      <label class="field-label">Título do Encontro</label>
+      <input class="field-input" value="${escHtml(enc.title)}" oninput="updateEnc('${encId}','title',this.value)">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1rem;">
+      <div class="field-group" style="margin:0;">
+        <label class="field-label">Ícone (emoji)</label>
+        <input class="field-input" value="${escHtml(enc.icon||'🎲')}" style="font-size:1.5rem;text-align:center;" oninput="updateEnc('${encId}','icon',this.value)">
+      </div>
+      <div class="field-group" style="margin:0;">
+        <label class="field-label">Tipo</label>
+        <select class="field-select" style="border-color:rgba(232,164,74,0.4);" onchange="updateEnc('${encId}','type',this.value);renderEncList();">
+          <option value="beneficial" ${enc.type==='beneficial'?'selected':''}>✦ Benéfico</option>
+          <option value="neutral"    ${enc.type==='neutral'   ?'selected':''}>🎲 Neutro</option>
+          <option value="harmful"    ${enc.type==='harmful'   ?'selected':''}>⚠ Maléfico</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Texto narrativo do Encontro</label>
+      <textarea class="field-textarea" style="min-height:120px;font-family:'Crimson Text',serif;font-size:0.9rem;" oninput="updateEnc('${encId}','text',this.value)">${escHtml(enc.text)}</textarea>
+      <div style="font-size:0.65rem;color:var(--stone);margin-top:0.3rem;font-style:italic;">Use {{nome}}, {{forca}}, etc. para personalizar o texto.</div>
+    </div>
+
+    <!-- Chance e comportamento -->
+    <div style="border:1px solid rgba(232,164,74,0.18);padding:0.8rem 1rem;margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.6rem;color:#f0c070;">⚙ Comportamento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem;">
+        <div>
+          <label class="field-label" style="font-size:0.6rem;">Peso (1 = normal, 10 = muito frequente)</label>
+          <input class="field-input" type="number" min="1" max="10" value="${enc.weight||1}" onchange="updateEnc('${encId}','weight',+this.value)">
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:0.3rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;cursor:pointer;color:var(--parchment-dark);">
+            <input type="checkbox" ${enc.once?'checked':''} onchange="updateEnc('${encId}','once',this.checked);renderEncList();" style="accent-color:#e8a44a;">
+            Ocorre apenas uma vez por jornada
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gatilhos -->
+    <div style="border:1px solid rgba(232,164,74,0.18);padding:0.8rem 1rem;margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.4rem;color:#f0c070;">🗺 Gatilhos de Cena</div>
+      <div style="font-size:0.68rem;color:var(--stone);font-style:italic;margin-bottom:0.6rem;">Deixe tudo desmarcado para que o encontro possa aparecer em qualquer cena.</div>
+      ${triggerChecks}
+    </div>
+
+    <!-- Condições de Tag -->
+    <div style="border:1px solid rgba(180,120,220,0.2);padding:0.8rem 1rem;margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.5rem;color:#c8a8ff;">🏷 Condições de Tag</div>
+      <div class="field-group" style="margin-bottom:0.5rem;">
+        <label class="field-label" style="font-size:0.6rem;">Requer estas tags (separadas por vírgula)</label>
+        <input class="field-input" placeholder="ex: PossuiAmuleto, FoiAoForte" value="${escHtml((enc.requireTags||[]).join(', '))}" onchange="updateEncTagList('${encId}','requireTags',this.value)">
+      </div>
+      <div class="field-group" style="margin-bottom:0.5rem;">
+        <label class="field-label" style="font-size:0.6rem;">Bloqueado se tiver estas tags (separadas por vírgula)</label>
+        <input class="field-input" placeholder="ex: JaConheceMago" value="${escHtml((enc.excludeTags||[]).join(', '))}" onchange="updateEncTagList('${encId}','excludeTags',this.value)">
+      </div>
+      <div class="field-group" style="margin:0;">
+        <label class="field-label" style="font-size:0.6rem;">Concede estas tags ao ocorrer (separadas por vírgula)</label>
+        <input class="field-input" placeholder="ex: EncontrouMercador" value="${escHtml((enc.grantTags||[]).join(', '))}" onchange="updateEncTagList('${encId}','grantTags',this.value)">
+      </div>
+    </div>
+
+    <!-- Efeitos -->
+    <div style="border:1px solid rgba(232,164,74,0.18);padding:0.8rem 1rem;margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.6rem;color:#f0c070;">⚡ Efeitos ao Ocorrer</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.7rem;">
+        <div>
+          <label class="field-label" style="font-size:0.6rem;">❤️ Vida (±)</label>
+          <input class="field-input" type="number" min="-99" max="99" value="${enc.vida||0}" onchange="updateEnc('${encId}','vida',+this.value)" style="border-color:rgba(204,68,68,0.4);">
+        </div>
+        <div>
+          <label class="field-label" style="font-size:0.6rem;">🧠 Sanidade (±)</label>
+          <input class="field-input" type="number" min="-99" max="99" value="${enc.sanidade||0}" onchange="updateEnc('${encId}','sanidade',+this.value)" style="border-color:rgba(147,112,219,0.4);">
+        </div>
+        <div>
+          <label class="field-label" style="font-size:0.6rem;">⭐ Pontos (±)</label>
+          <input class="field-input" type="number" min="-9999" max="9999" value="${enc.points||0}" onchange="updateEnc('${encId}','points',+this.value)" style="border-color:rgba(201,162,39,0.4);">
+        </div>
+      </div>
+      <div class="field-label" style="font-size:0.62rem;margin-bottom:0.5rem;color:var(--stone-light);">Alterações de Atributos:</div>
+      ${attrRows}
+    </div>
+  `;
+}
+
+function updateEnc(encId, key, value) {
+  const enc = getEditorEncounters().find(e => e.id === encId);
+  if (!enc) return;
+  enc[key] = value;
+  if (key === 'title') {
+    document.getElementById('enc-editing-label').textContent = '🎲 ' + (value || 'Sem título');
+    renderEncList();
+  }
+}
+
+function toggleEncTrigger(encId, nodeId, checked) {
+  const enc = getEditorEncounters().find(e => e.id === encId);
+  if (!enc) return;
+  if (!enc.triggerNodes) enc.triggerNodes = [];
+  if (checked) { if (!enc.triggerNodes.includes(nodeId)) enc.triggerNodes.push(nodeId); }
+  else { enc.triggerNodes = enc.triggerNodes.filter(id => id !== nodeId); }
+}
+
+function changeEncAttr(encId, attrKey, delta) {
+  const enc = getEditorEncounters().find(e => e.id === encId);
+  if (!enc) return;
+  if (!enc.attrDeltas) enc.attrDeltas = {};
+  enc.attrDeltas[attrKey] = Math.max(-5, Math.min(5, (enc.attrDeltas[attrKey] || 0) + delta));
+  renderEncEditor(encId);
+}
+
+function updateEncTagList(encId, field, value) {
+  const enc = getEditorEncounters().find(e => e.id === encId);
+  if (!enc) return;
+  enc[field] = value.split(',').map(t => t.trim()).filter(Boolean);
 }
 
 // ═══════════════════════════════════════════════════════════
