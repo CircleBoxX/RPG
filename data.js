@@ -1,13 +1,4 @@
-// ═══════════════════════════════════════════════════════════
-//  DATA — Aventuras built-in, atributos e classes
-//  Edite este arquivo para modificar as aventuras padrão do jogo.
-// ═══════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════
-//  DATA — built-in adventure
-// ═══════════════════════════════════════════════════════════
-const BUILTIN_ADVENTURE = {
-  {
+{
   "meta": {
     "id": "maldição-aetherion-001",
     "title": "A Maldição de Aetherion",
