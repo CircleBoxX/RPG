@@ -41,32 +41,6 @@ const BUILTIN_ADVENTURE = {
       id: "elder",
       title: "O Ancião Mirdan",
       text: "Mirdan vive numa cabana cheia de pergaminhos e fumaça de ervas. Ele escuta sua história com olhos fechados.\n\n«A Espada de Aldric só pode ser roubada por alguém que conhece o caminho secreto», murmura. «Apenas três pessoas sabiam: eu, o Sumo Sacerdote... e o Conde Harvan.»\n\nSeu olhar fica pesado. «O Conde partiu para o norte ontem à noite.»",
-      dialogues: [
-        {
-          speaker: "Mirdan",
-          portrait: "🧙",
-          text: "Entra, jovem. Sabia que virias. A chama desta vela tremeu quando a espada foi roubada."
-        },
-        {
-          speaker: "Mirdan",
-          portrait: "🧙",
-          text: "A Espada de Aldric só pode ser roubada por alguém que conhece o caminho secreto do templo. Muito poucos sabem esse segredo."
-        },
-        {
-          speaker: "{{nome}}",
-          portrait: "⚔️",
-          text: "Quem poderia ter feito isso? Precisamos encontrá-la antes que Vorthaan desperte!"
-        },
-        {
-          speaker: "Mirdan",
-          portrait: "🧙",
-          text: "Três pessoas sabiam. Eu — estou aqui diante de ti. O Sumo Sacerdote — encontrado morto esta manhã. E o Conde Harvan... que partiu para o norte ontem à noite."
-        },
-        {
-          narrator: true,
-          text: "Um silêncio pesado recai sobre a cabana. O cheiro de incenso não consegue mascarar o peso da revelação."
-        }
-      ],
       choices: [
         { text: "Ir ao norte perseguir o Conde", next: "north_road" },
         { text: "Perguntar ao ancião se ele pode ajudar de outra forma", next: "elder_help" },
@@ -120,27 +94,6 @@ const BUILTIN_ADVENTURE = {
       id: "harbor",
       title: "O Porto das Garças",
       text: "O porto está silencioso antes do amanhecer. Lanternas balançam nos mastros de um navio de bandeira neutra.\n\nVocê avista o Conde Harvan na doca — gordo, de capa escarlate, conversando com um homem de traços orientais que segura um baú.\n\nA Espada de Aldric está sendo transferida. Você tem minutos.",
-      dialogues: [
-        {
-          narrator: true,
-          text: "A neblina do amanhecer cobre o porto como um sudário. Você se aproxima pelas sombras dos armazéns."
-        },
-        {
-          speaker: "Conde Harvan",
-          portrait: "🏚️",
-          text: "Depressa! O navio parte com a maré. Aqui está o que foi combinado — a espada vale cada moeda desse ouro."
-        },
-        {
-          speaker: "Comerciante Misterioso",
-          portrait: "🗺️",
-          text: "Meu senhor estará satisfeito. Uma relíquia de tal poder abrirá muitas portas... e fechará outras."
-        },
-        {
-          speaker: "{{nome}}",
-          portrait: "⚔️",
-          text: "Não posso deixar isso acontecer. Mas como agir? Preciso pensar rápido."
-        }
-      ],
       choices: [
         { text: "Chamar a guarda do porto a plenos pulmões", next: "call_guards" },
         { text: "Roubar a espada durante a confusão de uma distração", next: "steal_back" },
@@ -236,13 +189,13 @@ function calcMaxVida(attrs)     { return 5 + (attrs.constituicao || 1); }
 function calcMaxSanidade(attrs) { return 5 + (attrs.sabedoria    || 1); }
 
 const CLASS_PRESETS = {
-  //                   FOR  DES  INT  CAR  SAB  CON
-  warrior:  { forca:5, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:3 },
-  rogue:    { forca:1, destreza:5, inteligencia:1, carisma:2, sabedoria:2, constituicao:1 },
-  mage:     { forca:1, destreza:1, inteligencia:5, carisma:1, sabedoria:3, constituicao:1 },
-  bard:     { forca:1, destreza:1, inteligencia:2, carisma:5, sabedoria:2, constituicao:1 },
-  ranger:   { forca:2, destreza:5, inteligencia:1, carisma:1, sabedoria:1, constituicao:2 },
-  paladin:  { forca:3, destreza:1, inteligencia:1, carisma:3, sabedoria:2, constituicao:2 },
+  //                        FOR  DES  INT  CAR  SAB  CON   ← atributo principal
+  warrior:  { forca:5, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'forca' },
+  rogue:    { forca:1, destreza:5, inteligencia:1, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'destreza' },
+  mage:     { forca:1, destreza:1, inteligencia:5, carisma:1, sabedoria:1, constituicao:1,  _primaryAttr: 'inteligencia' },
+  bard:     { forca:1, destreza:1, inteligencia:1, carisma:5, sabedoria:1, constituicao:1,  _primaryAttr: 'carisma' },
+  ranger:   { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:5, constituicao:1,  _primaryAttr: 'sabedoria' },
+  paladin:  { forca:1, destreza:1, inteligencia:1, carisma:1, sabedoria:1, constituicao:5,  _primaryAttr: 'constituicao' },
 };
 
 // ═══════════════════════════════════════════════════════════
