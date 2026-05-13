@@ -1,0 +1,86 @@
+/* ═══════════════════════════════════════════════════════════
+   ABILITIES — Sistema de Habilidades do Jogador
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Editor List ── */
+.ability-list-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(90,80,64,0.2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ability-list-item:hover  { background: rgba(201,162,39,0.06); }
+.ability-list-item.selected { background: rgba(128,200,160,0.12); border-left: 3px solid #80c8a0; padding-left: calc(0.75rem - 3px); }
+
+/* ── Effect Row ── */
+.ability-effect-row {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(90,80,64,0.3);
+  border-radius: 4px;
+  padding: 0.55rem 0.7rem;
+  margin-bottom: 0.45rem;
+}
+.ability-effect-row:last-child { margin-bottom: 0; }
+
+/* ── HUD chips (in-game) ── */
+#abilities-hud {
+  padding: 0.5rem 0.6rem;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(128,200,160,0.2);
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.ability-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  margin: 0.15rem 0.2rem 0.15rem 0;
+  white-space: nowrap;
+}
+
+.ability-chip.passive {
+  background: rgba(128,200,160,0.1);
+  border: 1px solid rgba(128,200,160,0.35);
+  color: #80c8a0;
+}
+
+.ability-chip.active-btn {
+  background: rgba(240,184,96,0.1);
+  border: 1px solid rgba(240,184,96,0.45);
+  color: #f0b860;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+.ability-chip.active-btn:hover:not(.disabled) {
+  background: rgba(240,184,96,0.22);
+  border-color: rgba(240,184,96,0.7);
+}
+.ability-chip.active-btn.disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+
+/* ── Combat ability button ── */
+.ability-combat-btn {
+  font-size: 0.78rem !important;
+}
+.ability-combat-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* ── Combat log entry for player ability ── */
+.log-player-ability {
+  color: #80c8a0;
+  font-style: italic;
+}

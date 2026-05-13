@@ -334,4 +334,892 @@ let adventures = [BUILTIN_ADVENTURE, {
       failPenalty: true
     }
   ]
-}];
+},
+
+// ═══════════════════════════════════════════════════════════
+//  CAMPO DE TESTES — cobre todos os sistemas do engine
+// ═══════════════════════════════════════════════════════════
+{
+  meta: {
+    id: "test-full",
+    title: "Campo de Testes",
+    author: "Sistema",
+    desc: "Aventura técnica que testa cada mecânica: escolhas simples, testes de atributo, tags, combate com habilidades, encontros com respostas e sidequests. Sem enredo — só engrenagens.",
+    genre: "Teste",
+    icon: "🧪",
+    startNode: "hub"
+  },
+
+  // ── Encontros aleatórios ─────────────────────────────────
+  randomEncounters: [
+    {
+      id: "enc_wanderer",
+      title: "O Andarilho Estranho",
+      icon: "🧙",
+      type: "neutral",
+      text: "Um andarilho de manto puído cruza seu caminho. Ele te olha de cima a baixo com interesse.\n\n«Você parece o tipo de pessoa que sabe o que está fazendo — ou pelo menos fingi bem.»",
+      weight: 2,
+      once: false,
+      triggerNodes: [],
+      requireTags: [],
+      excludeTags: ["conhece_andarilho"],
+      grantTags: [],
+      vida: 0, sanidade: 0, points: 0, attrDeltas: {},
+      responses: [
+        {
+          text: "Conversar com ele — parece saber coisas",
+          attrCheck: "carisma",
+          difficulty: 4,
+          successText: "Ele sorri e conta sobre um atalho que poucos conhecem. Sua confiança cresceu.",
+          failText: "Ele franze a testa e vai embora sem dizer mais nada. Constrangedor.",
+          successVida: 0, successSanidade: 1, successPoints: 15,
+          successGrantTags: ["conhece_andarilho"],
+          failVida: 0, failSanidade: 0, failPoints: 0,
+          failGrantTags: ["conhece_andarilho"]
+        },
+        {
+          text: "Ignorar e seguir em frente",
+          attrCheck: "",
+          difficulty: 5,
+          successText: "Você passa sem olhar. Ele bufa algo ininteligível atrás de você.",
+          failText: "",
+          successVida: 0, successSanidade: 0, successPoints: 0,
+          successGrantTags: ["conhece_andarilho"],
+          failVida: 0, failSanidade: 0, failPoints: 0,
+          failGrantTags: []
+        },
+        {
+          text: "Pedir uma bênção (Sabedoria — perceber intenção)",
+          attrCheck: "sabedoria",
+          difficulty: 5,
+          successText: "Você percebe que ele é genuíno. Ele murmura palavras antigas — você sente sua mente mais clara.",
+          failText: "Você não consegue avaliar se ele é confiável. Ele ri e parte sem cumprir o pedido.",
+          successVida: 0, successSanidade: 1, successPoints: 20,
+          successGrantTags: ["abencado", "conhece_andarilho"],
+          failVida: 0, failSanidade: -1, failPoints: 0,
+          failGrantTags: ["conhece_andarilho"]
+        }
+      ]
+    },
+    {
+      id: "enc_ambush",
+      title: "Emboscada Relâmpago",
+      icon: "⚠️",
+      type: "harmful",
+      text: "Uma figura salta das sombras! Uma faca roça seu braço antes de você reagir.\n\n«Bolsa ou sangue, aventureiro.»",
+      weight: 1,
+      once: true,
+      triggerNodes: [],
+      requireTags: [],
+      excludeTags: ["evitou_emboscada"],
+      grantTags: [],
+      vida: 0, sanidade: 0, points: 0, attrDeltas: {},
+      responses: [
+        {
+          text: "Contra-atacar com força bruta",
+          attrCheck: "forca",
+          difficulty: 5,
+          successText: "Seu soco conecta. O bandido cai tonto e foge mancando. Você sai ileso e ainda mais confiante.",
+          failText: "Você balança o punho, mas erra. Ele aproveita e acerta um golpe no estômago antes de fugir.",
+          successVida: 1, successSanidade: 0, successPoints: 25,
+          successGrantTags: ["evitou_emboscada"],
+          failVida: -1, failSanidade: 0, failPoints: 0,
+          failGrantTags: ["evitou_emboscada"]
+        },
+        {
+          text: "Recuar rapidamente e fugir",
+          attrCheck: "destreza",
+          difficulty: 4,
+          successText: "Você dança para trás e desaparece entre as sombras antes que ele possa te alcançar. Limpo.",
+          failText: "Você tropeça na pressa. Ele te dá um chute de raspão enquanto foge.",
+          successVida: 0, successSanidade: 0, successPoints: 10,
+          successGrantTags: ["evitou_emboscada"],
+          failVida: -1, failSanidade: -1, failPoints: 0,
+          failGrantTags: ["evitou_emboscada"]
+        },
+        {
+          text: "Blefar — fingir que está acompanhado",
+          attrCheck: "carisma",
+          difficulty: 6,
+          successText: "«Ei, pessoal — por aqui!» O bandido olha para os lados, entra em pânico e foge. Você nunca esteve tão sozinho na vida.",
+          failText: "Ele não acredita nem um segundo. Ri da sua cara e te acerta antes de sumir.",
+          successVida: 0, successSanidade: 1, successPoints: 30,
+          successGrantTags: ["evitou_emboscada"],
+          failVida: -1, failSanidade: -1, failPoints: 0,
+          failGrantTags: ["evitou_emboscada"]
+        }
+      ]
+    },
+    {
+      id: "enc_cache",
+      title: "Baú Esquecido",
+      icon: "📦",
+      type: "beneficial",
+      text: "Meio escondido atrás de uma rocha, um baú de madeira sem cadeado. Alguém o deixou aqui — ou o perdeu.",
+      weight: 2,
+      once: true,
+      triggerNodes: [],
+      requireTags: [],
+      excludeTags: [],
+      grantTags: ["achou_bau"],
+      vida: 1, sanidade: 0, points: 30, attrDeltas: {},
+      responses: []
+    }
+  ],
+
+  // ── Sidequests ───────────────────────────────────────────
+  sidequests: [
+    {
+      id: "sq_scholar",
+      title: "O Manuscrito Cifrado",
+      desc: "Um estudioso perdeu um manuscrito raro — ele precisa de alguém para recuperá-lo antes do anoitecer.",
+      declineText: "Não tenho tempo para isso agora.",
+      triggerNodes: ["hub", "zone_library"],
+      startNode: "sq_s_intro",
+      nodes: {
+        "sq_s_intro": {
+          id: "sq_s_intro",
+          title: "O Pedido do Estudioso",
+          text: "Um homem de óculos grossos e dedos manchados de tinta te para no corredor.\n\n«Por favor — meu manuscrito sobre runas antigas caiu no poço de leitura durante o terremoto da semana passada. Não consigo descer lá, mas você parece... capaz.»\n\nEle aperta as mãos nervoso. «Há algo valioso nele para mim. E para você, claro.»",
+          choices: [
+            {
+              text: "Descer no poço com uma corda (Força)",
+              next: "sq_s_success", nextFail: "sq_s_fail",
+              attrCheck: "forca", difficulty: 4,
+              vidaFail: -1,
+              pointsSuccess: 20
+            },
+            {
+              text: "Usar um gancho improvisado (Destreza)",
+              next: "sq_s_success", nextFail: "sq_s_fail",
+              attrCheck: "destreza", difficulty: 5,
+              pointsSuccess: 20
+            },
+            {
+              text: "Analisar o poço antes de agir (Inteligência)",
+              next: "sq_s_success", nextFail: "sq_s_partial",
+              attrCheck: "inteligencia", difficulty: 3,
+              pointsSuccess: 25
+            }
+          ]
+        },
+        "sq_s_success": {
+          id: "sq_s_success",
+          title: "Resgatado",
+          text: "O manuscrito está úmido mas legível. O estudioso o recebe com lágrimas nos olhos.\n\n«É insubstituível. Obrigado.» Ele te passa uma bolsinha de moedas e uma anotação sobre como decifrar runas básicas.\n\nVocê sente que aprendeu algo hoje — mesmo que indiretamente.",
+          choices: [],
+          ending: { type: "victory", title: "O Manuscrito Salvo", points: 50 }
+        },
+        "sq_s_partial": {
+          id: "sq_s_partial",
+          title: "Meio Caminho",
+          text: "Você analisa a situação com cuidado mas não consegue encontrar o manuscrito — apenas alguns fragmentos de página.\n\nO estudioso agradece mesmo assim. «Pelo menos salvou algumas páginas. Obrigado pela tentativa.»",
+          choices: [],
+          ending: { type: "neutral", title: "Fragmentos Recuperados", points: 15 }
+        },
+        "sq_s_fail": {
+          id: "sq_s_fail",
+          title: "Mãos Vazias",
+          text: "Você tenta, mas o manuscrito está em um ponto inacessível — ou se desfez completamente na água.\n\nO estudioso fecha os olhos com resignação. «Obrigado pela tentativa. Não era sua culpa.»\n\nMas o peso de não ter conseguido fica.",
+          choices: [],
+          ending: { type: "defeat", title: "Manuscrito Perdido", points: 0 }
+        }
+      },
+      attrRewards: { forca: 0, destreza: 0, inteligencia: 1, carisma: 0, sabedoria: 1, constituicao: 0 },
+      failDebuffs:  { forca: 0, destreza: 0, inteligencia: 0, carisma: -1, sabedoria: 0, constituicao: 0 },
+      failPenalty: true
+    },
+    {
+      id: "sq_guardian",
+      title: "O Guardião da Passagem",
+      desc: "Um guardião ferido bloqueia a saída leste — ele precisa de ajuda, mas é orgulhoso demais para pedir.",
+      declineText: "Não é problema meu.",
+      triggerNodes: ["zone_combat", "hub"],
+      startNode: "sq_g_intro",
+      nodes: {
+        "sq_g_intro": {
+          id: "sq_g_intro",
+          title: "O Guardião Teimoso",
+          text: "Um guardião alto e mal-humorado bloqueia a passagem leste, apoiando-se no escudo. Sua armadura tem sangue seco na parte inferior.\n\nVocê nota que ele está mancando — mas quando te olha, endireita o corpo como se nada fosse.",
+          choices: [
+            {
+              text: "Oferecer ajuda diretamente (Carisma — convencer o orgulhoso)",
+              next: "sq_g_helped", nextFail: "sq_g_refused",
+              attrCheck: "carisma", difficulty: 5,
+              pointsSuccess: 30
+            },
+            {
+              text: "Perceber a ferida e agir sem pedir permissão (Sabedoria + Constituição)",
+              next: "sq_g_helped", nextFail: "sq_g_partial",
+              attrCheck: "sabedoria", difficulty: 4,
+              pointsSuccess: 25
+            },
+            {
+              text: "Ignorar e tentar passar por ele assim mesmo",
+              next: "sq_g_ignored"
+            }
+          ]
+        },
+        "sq_g_helped": {
+          id: "sq_g_helped",
+          title: "Orgulho Curado",
+          text: "Resistência inicial, mas você insiste. Ele aceita a ajuda com um grumido — uma forma de obrigado.\n\nEnquanto você aplica o curativo improvisado, ele fala pela primeira vez sem hostilidade:\n\n«Você sabe o que está fazendo. A passagem está livre para você.»",
+          choices: [],
+          ending: { type: "victory", title: "O Guardião Aliado", points: 60 }
+        },
+        "sq_g_partial": {
+          id: "sq_g_partial",
+          title: "Aproximação Silenciosa",
+          text: "Você age sem pedir — e ele deixa. A ferida está tratada, mesmo que toscamente.\n\nEle não agradece com palavras. Só abre a passagem sem olhar para você.\n\nÀs vezes o silêncio é suficiente.",
+          choices: [],
+          ending: { type: "neutral", title: "Tratado em Silêncio", points: 25 }
+        },
+        "sq_g_refused": {
+          id: "sq_g_refused",
+          title: "Recusa Seca",
+          text: "«Não preciso de ajuda» — e o tom não aceita debate.\n\nVocê recua. Ele permanece ferido, orgulhoso e bloqueando a passagem.\n\nAlguns não querem ser salvos.",
+          choices: [],
+          ending: { type: "defeat", title: "Ajuda Recusada", points: 0 }
+        },
+        "sq_g_ignored": {
+          id: "sq_g_ignored",
+          title: "Empurra-Empurra",
+          text: "Você tenta passar. Ele não move um centímetro.\n\nVocês ficam se encarando por dez segundos desconfortáveis antes de você desistir.\n\n«Boa tentativa», ele diz, pela primeira vez com algo parecido com humor.",
+          choices: [],
+          ending: { type: "neutral", title: "Impasse Amistoso", points: 5 }
+        }
+      },
+      attrRewards: { forca: 0, destreza: 0, inteligencia: 0, carisma: 1, sabedoria: 0, constituicao: 1 },
+      failDebuffs:  { forca: 0, destreza: 0, inteligencia: 0, carisma: 0, sabedoria: -1, constituicao: 0 },
+      failPenalty: false
+    }
+  ],
+
+  // ── Nós principais ───────────────────────────────────────
+  nodes: {
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  HUB CENTRAL                                        │
+    // └─────────────────────────────────────────────────────┘
+    "hub": {
+      id: "hub",
+      title: "O Saguão dos Sistemas",
+      text: "Você está no centro de uma câmara circular. Cinco arcos se abrem para zonas de teste distintas.\n\nPainel de pedra na parede central:\n\n«ZONA AZUL — Escolhas e Consequências\nZONA VERMELHA — Testes de Atributo\nZONA ROXA — Sistema de Tags\nZONA LARANJA — Combate\nZONA VERDE — Biblioteca (Sidequest)»\n\nO chão brilha levemente sob seus pés. Você está com {{vida}}/{{vidaMax}} de vida.",
+      choices: [
+        { text: "→ Zona Azul: Escolhas e Efeitos Diretos", next: "zone_choices" },
+        { text: "→ Zona Vermelha: Testes de Atributo (todos os 6)", next: "zone_attrs" },
+        { text: "→ Zona Roxa: Sistema de Tags", next: "zone_tags_intro" },
+        { text: "→ Zona Laranja: Combate com Habilidades", next: "zone_combat" },
+        { text: "→ Zona Verde: Biblioteca (ativa Sidequest)", next: "zone_library" },
+        { text: "→ Saída: Encerramentos", next: "zone_endings" }
+      ]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA AZUL — Escolhas com efeitos diretos           │
+    // └─────────────────────────────────────────────────────┘
+    "zone_choices": {
+      id: "zone_choices",
+      title: "Zona Azul: Escolhas e Efeitos",
+      text: "Esta zona testa escolhas simples com efeitos de vida, sanidade e pontos aplicados diretamente — sem rolagem de dado.\n\nA poção verde restaura vida. A vermelha custa sanidade. A dourada dá pontos. O descanso recupera tudo um pouco.",
+      choices: [
+        {
+          text: "Beber a poção verde (+1 Vida)",
+          next: "zone_choices",
+          vida: 1,
+          points: 5
+        },
+        {
+          text: "Provar a poção vermelha (−1 Sanidade, +20 pts — risco calculado)",
+          next: "zone_choices",
+          sanidade: -1,
+          points: 20
+        },
+        {
+          text: "Pegar a moeda dourada (+30 pts)",
+          next: "zone_choices",
+          points: 30
+        },
+        {
+          text: "Descansar brevemente (+1 Vida, +1 Sanidade, −10 pts — custo de tempo)",
+          next: "zone_choices",
+          vida: 1,
+          sanidade: 1,
+          points: -10
+        },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA VERMELHA — Testes de Atributo                 │
+    // └─────────────────────────────────────────────────────┘
+    "zone_attrs": {
+      id: "zone_attrs",
+      title: "Zona Vermelha: Testes de Atributo",
+      text: "Seis pedestais, cada um com um desafio diferente. Cada teste usa um atributo distinto.\n\nSucesso e falha levam a cenas diferentes — com textos e efeitos próprios.",
+      choices: [
+        { text: "⚔️ Pedestal da Força — Mover a pedra", next: "attr_forca" },
+        { text: "🗡️ Pedestal da Destreza — Atravessar sem tocar", next: "attr_destreza" },
+        { text: "📚 Pedestal da Inteligência — Decifrar a runa", next: "attr_inteligencia" },
+        { text: "🎶 Pedestal do Carisma — Convencer o espectro", next: "attr_carisma" },
+        { text: "🌙 Pedestal da Sabedoria — Perceber a armadilha", next: "attr_sabedoria" },
+        { text: "🛡️ Pedestal da Constituição — Resistir ao veneno", next: "attr_constituicao" },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+
+    "attr_forca": {
+      id: "attr_forca",
+      title: "A Pedra do Gigante",
+      text: "Uma pedra esférica do tamanho de um barril sela a passagem. Pesada demais para qualquer homem comum.\n\nVocê vê marcas de mãos anteriores no granito — muita gente tentou antes.",
+      choices: [
+        {
+          text: "Empurrar com tudo que você tem (Força, Dif. 5)",
+          next: "attr_forca_ok", nextFail: "attr_forca_fail",
+          attrCheck: "forca", difficulty: 5,
+          pointsSuccess: 30, pointsFail: 5,
+          vidaFail: -1
+        },
+        { text: "← Voltar", next: "zone_attrs" }
+      ]
+    },
+    "attr_forca_ok": {
+      id: "attr_forca_ok",
+      title: "A Pedra Cede",
+      text: "Com um grunhido surdo, a pedra rola. A passagem está aberta.\n\nSeus braços doem, mas a satisfação compensa. Uma ficha de cobre cai do interior — um troféu deixado por alguém.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_forca_fail": {
+      id: "attr_forca_fail",
+      title: "Imóvel",
+      text: "A pedra não se move nem um milímetro. Você tenta de novo — e de novo. No fim, você para ofegante, com as costas doendo.\n\nA pedra permanece indiferente.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    "attr_destreza": {
+      id: "attr_destreza",
+      title: "O Corredor de Lâminas",
+      text: "Lâminas pendulares cortam o ar em ritmo mecânico. O espaço entre elas é suficiente — para quem for rápido o bastante.",
+      choices: [
+        {
+          text: "Atravessar no ritmo certo (Destreza, Dif. 5)",
+          next: "attr_destreza_ok", nextFail: "attr_destreza_fail",
+          attrCheck: "destreza", difficulty: 5,
+          pointsSuccess: 30, pointsFail: 5,
+          vidaFail: -1, sanidadeFail: 0
+        },
+        { text: "← Voltar", next: "zone_attrs" }
+      ]
+    },
+    "attr_destreza_ok": {
+      id: "attr_destreza_ok",
+      title: "Passagem Perfeita",
+      text: "Você lê o ritmo das lâminas como se fosse dança. Cada passo no momento exato. Do outro lado, você vira e faz uma mesura teatral para ninguém.\n\nNinguém viu, mas valeu.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_destreza_fail": {
+      id: "attr_destreza_fail",
+      title: "Corte de Raspão",
+      text: "Uma lâmina te acerta de raspão no ombro. Não é grave — mas dói, e o orgulho dói mais.\n\nVocê atravessa do outro lado mancando levemente.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    "attr_inteligencia": {
+      id: "attr_inteligencia",
+      title: "A Runa Proibida",
+      text: "Uma tábua de pedra exibe uma sequência de símbolos. Uma inscrição abaixo diz: «Diga o nome que está escrito aqui e a porta se abre. Diga errado e pague o preço.»\n\nVocê estuda os símbolos.",
+      choices: [
+        {
+          text: "Decifrar a runa e pronunciar o nome (Inteligência, Dif. 5)",
+          next: "attr_int_ok", nextFail: "attr_int_fail",
+          attrCheck: "inteligencia", difficulty: 5,
+          pointsSuccess: 35, pointsFail: 5,
+          sanidadeFail: -1
+        },
+        { text: "← Voltar", next: "zone_attrs" }
+      ]
+    },
+    "attr_int_ok": {
+      id: "attr_int_ok",
+      title: "Nome Correto",
+      text: "«Valdris.» A palavra saiu errada por um segundo — e então a porta se abre com um clique suave.\n\nDo outro lado, um pergaminho em branco. Nada escrito. Mas de alguma forma você sente que o teste era a tradução, não a recompensa.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_int_fail": {
+      id: "attr_int_fail",
+      title: "Resposta Errada",
+      text: "Você fala um nome — o errado. Um pulso de energia invisível te empurra de volta um metro.\n\nNenhum dano físico. Mas algo na sua cabeça range desconfortavelmente.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    "attr_carisma": {
+      id: "attr_carisma",
+      title: "O Espectro da Sala",
+      text: "Uma figura translúcida flutua no centro da sala. Braços cruzados, expressão fechada.\n\n«Eu só deixo passar quem merece», diz o espectro. «Convença-me.»\n\nEle espera.",
+      choices: [
+        {
+          text: "Argumentar com sinceridade (Carisma, Dif. 5)",
+          next: "attr_car_ok", nextFail: "attr_car_fail",
+          attrCheck: "carisma", difficulty: 5,
+          pointsSuccess: 30, pointsFail: 5,
+          sanidadeSuccess: 1, sanidadeFail: -1
+        },
+        { text: "← Voltar", next: "zone_attrs" }
+      ]
+    },
+    "attr_car_ok": {
+      id: "attr_car_ok",
+      title: "Convencido",
+      text: "O espectro escuta. Lentamente, seu rosto rígido suaviza.\n\n«Você... realmente acredita no que diz.» Ele se dissolve com um aceno de cabeça.\n\nA sala fica silenciosa, mas de um jeito que parece aprovação.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_car_fail": {
+      id: "attr_car_fail",
+      title: "Não Convenceu",
+      text: "O espectro ouve pacientemente — e então balança a cabeça.\n\n«Palavras vazias.» Ele permanece no lugar, implacável.\n\nVocê se retira sem ter chegado a lugar algum.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    "attr_sabedoria": {
+      id: "attr_sabedoria",
+      title: "O Corredor Silencioso",
+      text: "O corredor parece normal. Pedras lisas, luz estável, sem nada de suspeito.\n\nMas algo — uma sensação — te diz que nem tudo está certo aqui.",
+      choices: [
+        {
+          text: "Parar e observar antes de entrar (Sabedoria, Dif. 4)",
+          next: "attr_sab_ok", nextFail: "attr_sab_fail",
+          attrCheck: "sabedoria", difficulty: 4,
+          pointsSuccess: 30, pointsFail: 5,
+          vidaFail: -1
+        },
+        {
+          text: "Entrar direto — parece seguro",
+          next: "attr_sab_fail",
+          vida: -1
+        },
+        { text: "← Voltar", next: "zone_attrs" }
+      ]
+    },
+    "attr_sab_ok": {
+      id: "attr_sab_ok",
+      title: "Percepção Aguçada",
+      text: "Você para na entrada. Estuda o chão por um momento — e então vê: uma placa de pressão levemente mais clara que as outras, a dois passos de distância.\n\nVocê contorna pela borda da parede. No final do corredor, uma ficha prateada te espera.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_sab_fail": {
+      id: "attr_sab_fail",
+      title: "Armadilha Ativada",
+      text: "Seu pé pousa na placa. Um jato de vapor quente estoura da parede — não mata, mas queima.\n\nVocê sai do corredor bufando palavrões, com marcas vermelhas no braço.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    "attr_constituicao": {
+      id: "attr_constituicao",
+      title: "O Cálice do Teste",
+      text: "Um cálice de pedra está cheio de um líquido escuro e espesso. Uma inscrição no pedestal: «Beba. O forte passa. O fraco aprende.»",
+      choices: [
+        {
+          text: "Beber o conteúdo do cálice (Constituição, Dif. 5)",
+          next: "attr_con_ok", nextFail: "attr_con_fail",
+          attrCheck: "constituicao", difficulty: 5,
+          pointsSuccess: 35, pointsFail: 10,
+          vidaFail: -2
+        },
+        { text: "← Voltar sem beber", next: "zone_attrs" }
+      ]
+    },
+    "attr_con_ok": {
+      id: "attr_con_ok",
+      title: "O Corpo Resiste",
+      text: "O líquido desce amargo como fel. Seu estômago revira — mas você fica de pé, imóvel.\n\nApós trinta segundos agonizantes, a sensação passa. No lugar dela, uma energia estranha e limpa.\n\nO cálice some. No pedestal, seu nome aparece gravado.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+    "attr_con_fail": {
+      id: "attr_con_fail",
+      title: "Muito Forte",
+      text: "O líquido desce — e imediatamente vira de avesso. Você passa dez minutos péssimos encurvado.\n\nQuando finalmente se levanta, está pálido, trêmulo e humilhado.\n\nO cálice ainda está cheio. Como se nada tivesse acontecido.",
+      choices: [{ text: "← Voltar aos pedestais", next: "zone_attrs" }]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA ROXA — Sistema de Tags                        │
+    // └─────────────────────────────────────────────────────┘
+    "zone_tags_intro": {
+      id: "zone_tags_intro",
+      title: "Zona Roxa: Tags e Memória",
+      text: "Esta zona demonstra o sistema de tags — marcadores invisíveis que o jogo lembra sobre você.\n\nVocê ainda não tem nenhuma tag ativa aqui. Suas escolhas nesta zona vão criar e consumir tags, mostrando como elas alteram o que aparece.",
+      choices: [
+        { text: "Pegar o cristal azul (ganha tag: tem_cristal)", next: "zone_tags_cristal" },
+        { text: "Falar com a sombra (ganha tag: falou_sombra)", next: "zone_tags_sombra" },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+    "zone_tags_cristal": {
+      id: "zone_tags_cristal",
+      title: "O Cristal Azul",
+      text: "O cristal pulsa levemente em sua mão. Algo nele ressoa.\n\nAgora você carrega o cristal. Isso vai mudar o que alguns NPCs têm a dizer.",
+      choices: [
+        {
+          text: "Ir para a sala do oráculo",
+          next: "zone_tags_oraculo",
+          tagEffects: [{ tag: "tem_cristal", value: true }]
+        }
+      ]
+    },
+    "zone_tags_sombra": {
+      id: "zone_tags_sombra",
+      title: "A Sombra que Fala",
+      text: "Uma sombra projetada na parede se move sozinha. Ela vira a cabeça para você.\n\n«Você ouviu. Isso é o suficiente por agora.»\n\nVocê não entendeu bem — mas algo ficou.",
+      choices: [
+        {
+          text: "Ir para a sala do oráculo",
+          next: "zone_tags_oraculo",
+          tagEffects: [{ tag: "falou_sombra", value: true }]
+        }
+      ]
+    },
+    "zone_tags_oraculo": {
+      id: "zone_tags_oraculo",
+      title: "A Sala do Oráculo",
+      text: "O oráculo é uma estátua com quatro braços e nenhuma boca. Três opções surgem na parede — mas algumas só aparecem para quem merece.",
+      choices: [
+        {
+          text: "«Mostre o cristal» — [visível apenas com tem_cristal]",
+          next: "zone_tags_cristal_result",
+          tagRules: [{ tag: "tem_cristal", mode: "hide", invert: true }]
+        },
+        {
+          text: "«Contar sobre a sombra» — [visível apenas com falou_sombra]",
+          next: "zone_tags_sombra_result",
+          tagRules: [{ tag: "falou_sombra", mode: "hide", invert: true }]
+        },
+        {
+          text: "«Nada a mostrar» — [sempre visível]",
+          next: "zone_tags_nada"
+        },
+        {
+          text: "«Você teve as duas experiências» — [bloqueado sem ambas as tags]",
+          next: "zone_tags_ambos_result",
+          tagRules: [
+            { tag: "tem_cristal", mode: "disable", invert: true },
+            { tag: "falou_sombra", mode: "disable", invert: true }
+          ]
+        },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+    "zone_tags_cristal_result": {
+      id: "zone_tags_cristal_result",
+      title: "A Resposta do Cristal",
+      text: "A estátua estende um braço e toca o cristal. Ele brilha forte por um segundo — e então apaga.\n\n«Você carrega luz», diz uma voz que não vem de lugar nenhum. «Mas luz atrai sombra. Lembre disso.»",
+      choices: [{ text: "← Voltar ao Oráculo", next: "zone_tags_oraculo" }]
+    },
+    "zone_tags_sombra_result": {
+      id: "zone_tags_sombra_result",
+      title: "A Resposta da Sombra",
+      text: "A estátua inclina a cabeça. «Você ouviu o que não devia ser ouvido — e isso te torna mais importante do que imagina.»\n\nO silêncio depois disso pesa como algo concreto.",
+      choices: [{ text: "← Voltar ao Oráculo", next: "zone_tags_oraculo" }]
+    },
+    "zone_tags_nada": {
+      id: "zone_tags_nada",
+      title: "Mãos Vazias",
+      text: "A estátua olha para você — ou pelo menos dá essa sensação.\n\n«Você chegou aqui sem experiência. Isso também é uma resposta.»\n\nNão há julgamento. Apenas observação.",
+      choices: [{ text: "← Voltar ao Oráculo", next: "zone_tags_oraculo" }]
+    },
+    "zone_tags_ambos_result": {
+      id: "zone_tags_ambos_result",
+      title: "Luz e Sombra Juntas",
+      text: "A estátua se ilumina completamente por um instante.\n\n«Você carrega as duas faces. Poucos chegam aqui com ambas.»\n\nO oráculo se curva — a única vez que algo aqui te tratou como igual.",
+      choices: [{ text: "← Voltar ao Oráculo", next: "zone_tags_oraculo" }]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA LARANJA — Combate                             │
+    // └─────────────────────────────────────────────────────┘
+    "zone_combat": {
+      id: "zone_combat",
+      title: "Zona Laranja: Combate",
+      text: "Uma arena circular com três portas marcadas. O cheiro de metal e suor enche o ar.\n\nTrês encontros de dificuldades distintas — cada um demonstra mecânicas diferentes de combate.",
+      choices: [
+        { text: "Porta 1 — Recruta (combate simples, sem habilidades)", next: "combat_basic" },
+        { text: "Porta 2 — Veterano (com habilidades, fuga permitida)", next: "combat_veteran" },
+        { text: "Porta 3 — Guardião (habilidades múltiplas, sem fuga)", next: "combat_boss" },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+
+    "combat_basic": {
+      id: "combat_basic",
+      title: "O Recruta",
+      text: "Um jovem guarda em armadura polida demais te bloqueia com uma lança. Inexperiente — mas determinado.",
+      combat: {
+        name: "Recruta",
+        icon: "🪖",
+        vida: 18,
+        vidaMax: 18,
+        attrs: { forca: 2, destreza: 2, constituicao: 2 },
+        xpReward: 30,
+        fleeAllowed: true,
+        defeatPenalty: 1,
+        victoryNode: "combat_basic_win",
+        defeatNode: "combat_basic_lose",
+        fleeNode: "zone_combat",
+        victoryText: "O recruta cai no chão bufando. Ele vai estar bem — provavelmente.",
+        defeatText: "Ele era mais rápido do que parecia. Você recua com o orgulho machucado.",
+        fleeText: "Você se afasta. Ele te deixa ir — novatos não insistem.",
+        victoryTagEffects: [{ tag: "venceu_recruta", value: true }],
+        defeatTagEffects: [],
+        abilities: []
+      },
+      choices: []
+    },
+    "combat_basic_win": {
+      id: "combat_basic_win",
+      title: "Recruta Derrubado",
+      text: "O recruta se levanta devagar, envergonhado mas ileso.\n\n«Bom combate», ele admite, enxugando a testa.\n\nVocê ganhou experiência — e uma tag que prova isso.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+    "combat_basic_lose": {
+      id: "combat_basic_lose",
+      title: "Derrubado pelo Novato",
+      text: "Ele ficou de pé, você não. Constrangedor.\n\nO recruta te estende a mão para levantar — pelo menos ele é cavalheiro.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+
+    "combat_veteran": {
+      id: "combat_veteran",
+      title: "O Veterano",
+      text: "Cicatrizes de batalha cruzam seu rosto. Ele te avalia com um olhar que já viu tudo.\n\n«Vamos ver o que você aprendeu.»",
+      combat: {
+        name: "Veterano",
+        icon: "⚔️",
+        vida: 28,
+        vidaMax: 28,
+        attrs: { forca: 4, destreza: 3, constituicao: 3 },
+        xpReward: 60,
+        fleeAllowed: true,
+        defeatPenalty: 1,
+        victoryNode: "combat_vet_win",
+        defeatNode: "combat_vet_lose",
+        fleeNode: "zone_combat",
+        victoryText: "O veterano balança a cabeça com respeito. «Não esperava isso de você.»",
+        defeatText: "Ele te derruba com um golpe limpo. «Volte quando tiver treinado mais.»",
+        fleeText: "Ele deixa você recuar. «Saber quando fugir também é habilidade.»",
+        victoryTagEffects: [{ tag: "venceu_veterano", value: true }],
+        defeatTagEffects: [{ tag: "foi_derrotado_vet", value: true }],
+        abilities: [
+          {
+            id: "ab_vet_golpe",
+            name: "Golpe de Experiência",
+            icon: "🗡️",
+            quotes: [
+              "«Você abriu uma guarda ali. Erro fatal.»",
+              "«Vi esse movimento há vinte anos.»",
+              "«Previsível.»"
+            ],
+            effects: [
+              { type: "debuff_player", attr: "destreza", value: 1, duration: 2 }
+            ],
+            triggerCondition: "any",
+            triggerRoundMin: 2,
+            triggerHpPct: 50,
+            usageChance: 40,
+            cooldown: 3,
+            maxUses: 0
+          },
+          {
+            id: "ab_vet_regen",
+            name: "Fôlego de Guerra",
+            icon: "💪",
+            quotes: [
+              "«Não é a primeira vez que sangro em combate.»",
+              "«Aprendi a aguentar mais do que isso.»"
+            ],
+            effects: [
+              { type: "regen_self", attr: "vida", value: 3, duration: 2 }
+            ],
+            triggerCondition: "lowHp",
+            triggerRoundMin: 1,
+            triggerHpPct: 40,
+            usageChance: 70,
+            cooldown: 4,
+            maxUses: 1
+          }
+        ]
+      },
+      choices: []
+    },
+    "combat_vet_win": {
+      id: "combat_vet_win",
+      title: "Respeito Ganho",
+      text: "O veterano abaixa a arma devagar.\n\n«Você tem jeito.» Não é elogio fácil vindo dele.\n\nEle te passa uma moeda de treino como marcador — você venceu o segundo nível.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+    "combat_vet_lose": {
+      id: "combat_vet_lose",
+      title: "Lição Difícil",
+      text: "Você está no chão olhando para o teto.\n\n«Você tem potencial», diz o veterano acima de você. «Mas potencial não para um golpe.»\n\nEle te ajuda a levantar.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+
+    "combat_boss": {
+      id: "combat_boss",
+      title: "O Guardião da Porta",
+      text: "Ele usa uma máscara de ferro sem expressão. Em cada mão, uma espada curta. Não diz uma palavra.\n\nA porta atrás dele está trancada. Não há saída a não ser passar por ele.",
+      combat: {
+        name: "Guardião Mascarado",
+        icon: "🎭",
+        vida: 40,
+        vidaMax: 40,
+        attrs: { forca: 5, destreza: 4, constituicao: 4 },
+        xpReward: 100,
+        fleeAllowed: false,
+        defeatPenalty: 2,
+        victoryNode: "combat_boss_win",
+        defeatNode: "combat_boss_lose",
+        fleeNode: "",
+        victoryText: "A máscara cai. Por baixo dela, nada — apenas ar. O Guardião era apenas uma construção de vontade e propósito.",
+        defeatText: "Você cai. O Guardião pousa uma das espadas no chão ao seu lado — um sinal. Você pode tentar de novo quando estiver pronto.",
+        victoryTagEffects: [{ tag: "venceu_guardiao", value: true }],
+        defeatTagEffects: [],
+        abilities: [
+          {
+            id: "ab_boss_stun",
+            name: "Golpe Paralisante",
+            icon: "⚡",
+            quotes: [
+              "«»",
+              "«»"
+            ],
+            effects: [
+              { type: "stun", attr: "forca", value: 1, duration: 1 }
+            ],
+            triggerCondition: "any",
+            triggerRoundMin: 3,
+            triggerHpPct: 100,
+            usageChance: 35,
+            cooldown: 4,
+            maxUses: 2
+          },
+          {
+            id: "ab_boss_blind",
+            name: "Passo das Sombras",
+            icon: "🌑",
+            quotes: ["«»"],
+            effects: [
+              { type: "blind", attr: "destreza", value: 20, duration: 2 }
+            ],
+            triggerCondition: "any",
+            triggerRoundMin: 2,
+            triggerHpPct: 100,
+            usageChance: 45,
+            cooldown: 3,
+            maxUses: 0
+          },
+          {
+            id: "ab_boss_curse",
+            name: "Maldição de Ferro",
+            icon: "🩸",
+            quotes: ["«»"],
+            effects: [
+              { type: "curse", attr: "forca", value: 2, duration: 1 }
+            ],
+            triggerCondition: "lowHp",
+            triggerRoundMin: 1,
+            triggerHpPct: 50,
+            usageChance: 80,
+            cooldown: 5,
+            maxUses: 1
+          }
+        ]
+      },
+      choices: []
+    },
+    "combat_boss_win": {
+      id: "combat_boss_win",
+      title: "A Porta se Abre",
+      text: "A figura desaparece em névoa. A porta atrás dela se abre devagar, revelando... outra sala de teste.\n\nClaro.\n\nMas você sente que provou algo — para o sistema, e para você mesmo.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+    "combat_boss_lose": {
+      id: "combat_boss_lose",
+      title: "Ainda Não",
+      text: "O Guardião para em frente a você. Não há crueldade no gesto — só encerramento.\n\nVocê vai tentar de novo. Quando estiver pronto.",
+      choices: [{ text: "← Voltar à Arena", next: "zone_combat" }]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA VERDE — Biblioteca / Sidequest trigger        │
+    // └─────────────────────────────────────────────────────┘
+    "zone_library": {
+      id: "zone_library",
+      title: "A Biblioteca",
+      text: "Estantes do chão ao teto. Livros que você nunca viu em lugar nenhum.\n\nUm estudioso de óculos grossos te vê entrar e se levanta de uma escrivaninha bagunçada.\n\nEsta zona ativa as sidequests configuradas. Se o estudioso te ofereceu uma missão — foi aqui.",
+      choices: [
+        {
+          text: "Explorar as estantes em silêncio",
+          next: "zone_library",
+          sanidade: 1,
+          points: 10
+        },
+        {
+          text: "Perguntar ao estudioso sobre os livros restritos (Inteligência, Dif. 4)",
+          next: "library_restricted_ok", nextFail: "library_restricted_fail",
+          attrCheck: "inteligencia", difficulty: 4,
+          pointsSuccess: 25, pointsFail: 5
+        },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+    "library_restricted_ok": {
+      id: "library_restricted_ok",
+      title: "A Seção Proibida",
+      text: "O estudioso levanta uma sobrancelha, mas te deixa passar pela cancela.\n\nOs livros lá dentro são densos, escritos em línguas mortas. Mas em um deles, uma anotação marginal te diz algo que você vai carregar por um bom tempo.",
+      choices: [{ text: "← Voltar à Biblioteca", next: "zone_library" }]
+    },
+    "library_restricted_fail": {
+      id: "library_restricted_fail",
+      title: "Acesso Negado",
+      text: "O estudioso franze a testa. «Essa seção é restrita a pesquisadores credenciados.»\n\nEle volta para a escrivaninha. Conversa encerrada.",
+      choices: [{ text: "← Voltar à Biblioteca", next: "zone_library" }]
+    },
+
+    // ┌─────────────────────────────────────────────────────┐
+    // │  ZONA DE ENCERRAMENTOS                              │
+    // └─────────────────────────────────────────────────────┘
+    "zone_endings": {
+      id: "zone_endings",
+      title: "A Sala dos Encerramentos",
+      text: "Três portas finais. Cada uma com uma placa.\n\nPorta Dourada: Vitória\nPorta Vermelha: Derrota\nPorta Cinza: Fim Neutro\n\nEsta sala demonstra os três tipos de encerramento do sistema.",
+      choices: [
+        { text: "Porta Dourada — Encerramento de Vitória", next: "ending_victory" },
+        { text: "Porta Vermelha — Encerramento de Derrota", next: "ending_defeat" },
+        { text: "Porta Cinza — Encerramento Neutro", next: "ending_neutral" },
+        { text: "← Voltar ao Saguão", next: "hub" }
+      ]
+    },
+    "ending_victory": {
+      id: "ending_victory",
+      title: "Teste Concluído com Êxito",
+      text: "Você percorreu os sistemas, enfrentou o que havia para enfrentar, e chegou aqui com suas escolhas.\n\nO motor do jogo registrou tudo — cada tag, cada dado, cada ponto.\n\nÉ isso que a vitória parece: não ausência de falha, mas persistência apesar dela.",
+      choices: [],
+      ending: { type: "victory", title: "Arquiteto dos Sistemas", points: 100 }
+    },
+    "ending_defeat": {
+      id: "ending_defeat",
+      title: "Fim Antecipado",
+      text: "Você escolheu a derrota. É um encerramento como qualquer outro — o sistema não julga.\n\nDerrotas têm textos próprios, pontuações menores, e podem desbloquear finais alternativos em aventuras reais.\n\nAqui, ela é só um encerramento limpo.",
+      choices: [],
+      ending: { type: "defeat", title: "Saída pela Porta Vermelha", points: 10 }
+    },
+    "ending_neutral": {
+      id: "ending_neutral",
+      title: "Um Fim sem Julgamento",
+      text: "A porta cinza leva a uma sala vazia. Sem troféus, sem punição.\n\nO encerramento neutro é para histórias sem vencedor nem perdedor — onde o que importa é o que ficou no caminho.\n\nO sistema fecha aqui, sem fanfarra.",
+      choices: [],
+      ending: { type: "neutral", title: "O Caminho do Meio", points: 40 }
+    }
+  }
+}
+];

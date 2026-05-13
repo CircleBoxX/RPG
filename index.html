@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crônicas do Reino</title>
 <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<!-- ── Stylesheets (order matters: base first) ── -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/char.css">
+<link rel="stylesheet" href="css/adventure_select.css">
+<link rel="stylesheet" href="css/score_epilogue.css">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/combat.css">
+<link rel="stylesheet" href="css/dialogue.css">
+<link rel="stylesheet" href="css/encounter.css">
+<link rel="stylesheet" href="css/abilities.css">
 </head>
 <body>
 
@@ -187,6 +197,7 @@
     <div class="char-hud" id="char-hud" style="display:none;"></div>
     <!-- Tags HUD -->
     <div id="tags-hud" style="display:none;flex-wrap:wrap;gap:0.3rem;padding:0.3rem 1rem 0;"></div>
+    <div id="abilities-hud" style="display:none;padding:0.3rem 1rem 0;"></div>
 
     <div class="story-card" id="story-card">
       <!-- BG position slot -->
@@ -228,6 +239,8 @@
       <div style="display:flex;gap:0.8rem; flex-wrap:wrap;">
         <button class="btn-sm" style="border-color:#9370db;color:#c8a8ff;" onclick="openSqEditor()">◈ Sidequests</button>
         <button class="btn-sm" style="border-color:#e8a44a;color:#f0c070;" onclick="openEncounterEditor()">🎲 Encontros</button>
+        <button class="btn-sm" style="border-color:#80c8a0;color:#80c8a0;" onclick="openAbilityEditor()">✦ Habilidades</button>
+        <button class="btn-sm" style="border-color:#cc4444;color:#e07070;" onclick="openCombatEditor()">⚔ Combates</button>
         <button class="btn-sm" onclick="saveAdventureFromEditor()">💾 Salvar</button>
         <button class="btn-sm" onclick="exportAdventure()">↓ Exportar JSON</button>
         <button class="btn-sm" onclick="testAdventure()">▶ Testar</button>
@@ -445,11 +458,15 @@
       <div class="combat-log-entry">O combate começa...</div>
     </div>
 
+    <!-- Status icons bar -->
+    <div id="combat-status-icons" style="display:flex;flex-wrap:wrap;gap:0.3rem;padding:0.3rem 0.1rem;min-height:1.6rem;"></div>
+
     <!-- Roll animation zone -->
     <div class="combat-roll-zone" id="combat-roll-zone" style="display:none;">
       <div class="combat-roll-label" id="combat-roll-label">Rolando...</div>
       <div class="combat-roll-dice" id="combat-roll-dice">🎲</div>
       <div class="combat-roll-num" id="combat-roll-num">—</div>
+      <div class="combat-roll-chance" id="combat-roll-chance-label"></div>
       <div class="combat-roll-result" id="combat-roll-result"></div>
     </div>
 
@@ -476,6 +493,8 @@
         <span class="combat-action-sub">Ação de Tag</span>
       </button>
     </div>
+    <!-- Player abilities in combat -->
+    <div id="combat-ability-btns" style="display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;padding:0 0.5rem 0.3rem;"></div>
 
     <!-- Continue (after combat ends) -->
     <div class="combat-end-panel" id="combat-end-panel" style="display:none;">
@@ -533,13 +552,130 @@
     <div class="encounter-icon" id="enc-icon">🌿</div>
     <div class="encounter-title" id="enc-title">Título do Encontro</div>
     <div class="encounter-text" id="enc-text"></div>
-    <div class="encounter-effects" id="enc-effects"></div>
-    <button class="btn-medieval" style="min-width:200px;" id="enc-continue-btn">Continuar →</button>
+
+    <!-- Fase 1: escolhas de reação do jogador -->
+    <div id="enc-responses-area" style="display:none;width:100%;">
+      <div class="enc-responses-label">Como você reage?</div>
+      <div id="enc-responses-list"></div>
+    </div>
+
+    <!-- Fase 2: resultado do teste de atributo -->
+    <div id="enc-roll-area" style="display:none;width:100%;text-align:center;padding:0.5rem 0;">
+      <div id="enc-roll-attr-name" style="font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.6rem;"></div>
+      <div id="enc-roll-number" style="font-family:'Cinzel',serif;font-size:3rem;font-weight:700;color:var(--gold);min-height:3.5rem;line-height:1;"></div>
+      <div id="enc-roll-vs" style="font-size:0.72rem;color:var(--stone-light);margin-bottom:0.5rem;"></div>
+      <div id="enc-roll-result" class="roll-result" style="margin-bottom:1rem;"></div>
+      <div id="enc-roll-outcome-text"></div>
+    </div>
+
+    <!-- Fase 3: resumo dos efeitos -->
+    <div id="enc-effects-area" style="display:none;width:100%;margin-top:0.3rem;">
+      <div style="font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.2em;color:var(--stone);text-transform:uppercase;text-align:center;margin-bottom:0.6rem;">Resultado</div>
+      <div class="encounter-effects" id="enc-effects"></div>
+    </div>
+
+    <!-- Botão continuar -->
+    <button class="btn-medieval" style="min-width:200px;display:none;margin-top:0.5rem;" id="enc-continue-btn">Continuar →</button>
   </div>
 </div>
 
-<!-- Scripts: data primeiro, engine depois -->
+<!-- ════════════════════════════════ COMBAT EDITOR SCREEN ════════════════════════════════ -->
+<!-- ════════════════════════════════ ABILITY EDITOR SCREEN ════════════════════════════════ -->
+<div id="screen-ability-editor" class="screen" style="overflow-y:auto;">
+  <div style="max-width:1300px; margin:0 auto; padding: 1rem 1.5rem 0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.8rem;">
+      <button class="back-link" onclick="showScreen('screen-editor')">← Voltar ao Editor</button>
+      <span style="font-family:'Cinzel',serif; color:#80c8a0; font-size:1rem; letter-spacing:0.1em;">✦ EDITOR DE HABILIDADES</span>
+      <div style="display:flex;gap:0.8rem;">
+        <button class="btn-sm" style="border-color:#80c8a0;color:#80c8a0;" onclick="addAbilityDef()">+ Nova Habilidade</button>
+      </div>
+    </div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone-light);font-size:0.85rem;margin-bottom:1rem;padding:0.8rem 1rem;border:1px solid rgba(128,200,160,0.25);">
+      Crie habilidades <strong style="color:#80c8a0;">passivas</strong> (aplicadas automaticamente) ou <strong style="color:#f0b860;">ativas</strong> (acionadas pelo jogador).
+      Habilidades de <strong style="color:#e07070;">Combate</strong> só podem ser usadas durante batalhas.
+      Habilidades de <strong style="color:#88aadd;">Exploração</strong> aparecem como botões na tela de jogo.
+      Vincule habilidades às Classes do Personagem para que os jogadores as recebam ao criar personagem.
+    </div>
+  </div>
+
+  <div class="sq-editor-layout" style="padding:0 1.5rem;" id="ability-editor-layout">
+    <!-- LEFT: Ability list -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(128,200,160,0.35);">
+        <span style="color:#80c8a0;">Habilidades</span>
+      </div>
+      <div class="panel-body" id="ability-def-list">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:1.5rem;font-size:0.85rem;">Nenhuma habilidade criada ainda.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Ability editor -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(128,200,160,0.35);">
+        <span id="ability-editing-label" style="color:#80c8a0;">Editar Habilidade</span>
+        <button class="btn-sm red" onclick="deleteAbilityDef()">Excluir</button>
+      </div>
+      <div class="panel-body" id="ability-def-editor">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:2rem;">Selecione ou crie uma habilidade.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-combat-editor" class="screen" style="overflow-y:auto;">
+  <div style="max-width:1300px; margin:0 auto; padding: 1rem 1.5rem 0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.8rem;">
+      <button class="back-link" onclick="showScreen('screen-editor')">← Voltar ao Editor</button>
+      <span style="font-family:'Cinzel',serif; color:#e07070; font-size:1rem; letter-spacing:0.1em;">⚔ EDITOR DE COMBATES</span>
+      <div style="display:flex;gap:0.8rem;">
+        <button class="btn-sm" style="border-color:#cc4444;color:#e07070;" onclick="addCombatDef()">+ Novo Combate</button>
+      </div>
+    </div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone-light);font-size:0.85rem;margin-bottom:1rem;padding:0.8rem 1rem;border:1px solid rgba(204,68,68,0.25);">
+      Crie e configure inimigos aqui. Cada combate tem um ID único que você vincula às cenas no editor de cenas. Assim o mesmo inimigo pode ser reutilizado em várias cenas, e você edita tudo num só lugar.
+    </div>
+  </div>
+
+  <div class="sq-editor-layout" style="padding:0 1.5rem;" id="combat-editor-layout">
+    <!-- LEFT: Combat list -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(204,68,68,0.35);">
+        <span style="color:#e07070;">Combates</span>
+      </div>
+      <div class="panel-body" id="combat-def-list">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:1.5rem;font-size:0.85rem;">Nenhum combate criado ainda.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Combat editor -->
+    <div class="editor-panel">
+      <div class="panel-header" style="border-color:rgba(204,68,68,0.35);">
+        <span id="combat-editing-label" style="color:#e07070;">Editar Combate</span>
+        <button class="btn-sm red" onclick="deleteCombatDef()">Excluir</button>
+      </div>
+      <div class="panel-body" id="combat-def-editor">
+        <div style="color:var(--stone);font-style:italic;text-align:center;padding:2rem;">Selecione ou crie um combate.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Data ── -->
 <script src="data.js"></script>
-<script src="engine.js"></script>
+
+<!-- ── Engine modules (order: state → utils → persistence → game → editor → features) ── -->
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/persistence.js"></script>
+<script src="js/game.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/images.js"></script>
+<script src="js/score.js"></script>
+<script src="js/dialogue.js"></script>
+<script src="js/combat_runtime.js"></script>
+<script src="js/combat_editor.js"></script>
+<script src="js/sidequests.js"></script>
+<script src="js/encounters.js"></script>
+<script src="js/abilities.js"></script>
 </body>
 </html>
