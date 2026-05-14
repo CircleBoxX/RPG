@@ -1,0 +1,101 @@
+  .sq-editor-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    max-width: 1300px;
+    margin: 0 auto;
+    height: calc(100vh - 120px);
+  }
+
+  /* Sidequest list in adventure editor */
+  .sq-slot-item {
+    border: 1px solid rgba(147,112,219,0.25);
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+  }
+
+  .sq-slot-item:hover { border-color: rgba(147,112,219,0.6); background: rgba(147,112,219,0.05); }
+  .sq-slot-item.selected { border-color: #9370db; background: rgba(147,112,219,0.12); }
+
+  .sq-slot-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: #c8a8ff;
+    margin-bottom: 0.15rem;
+  }
+
+  .sq-slot-trigger {
+    font-size: 0.68rem;
+    color: var(--stone);
+    font-style: italic;
+  }
+
+  /* Inline attr reward editor */
+  .attr-reward-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(201,162,39,0.08);
+  }
+
+  .attr-reward-row:last-child { border-bottom: none; }
+
+  .reward-delta-btn {
+    width: 26px;
+    height: 26px;
+    border: 1px solid rgba(201,162,39,0.3);
+    background: transparent;
+    color: var(--gold);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+
+  .reward-delta-btn:hover { background: var(--gold); color: var(--ink); }
+  .reward-delta-btn.neg { border-color: rgba(139,26,26,0.5); color: #cc4444; }
+  .reward-delta-btn.neg:hover { background: var(--blood); color: var(--parchment); }
+
+  .reward-val {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    min-width: 2.2rem;
+    text-align: center;
+  }
+
+  .reward-val.pos { color: #4a8; }
+  .reward-val.neg { color: #cc4444; }
+  .reward-val.zero { color: var(--stone); }
+
+  /* Active sidequest HUD indicator */
+  .sq-hud-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.2em 0.6em;
+    border: 1px solid #9370db;
+    color: #c8a8ff;
+    background: rgba(50,20,80,0.4);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { border-color: #9370db; }
+    50% { border-color: #c8a8ff; box-shadow: 0 0 8px rgba(147,112,219,0.4); }
+  }
+
+  /* Mobile */
+  @media (max-width: 700px) {
+    .editor-layout { grid-template-columns: 1fr; height: auto; }
+    .editor-panel { height: 400px; }
+    .story-card { padding: 1.5rem; }
+    .scene-text { font-size: 1rem; }
+    .sq-editor-layout { grid-template-columns: 1fr; height: auto; }
+  }
+
+  /* ── SCORE SYSTEM ── */

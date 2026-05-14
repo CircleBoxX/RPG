@@ -1,0 +1,1353 @@
+{
+  "meta": {
+    "id": "sinos-de-bruma-v1",
+    "title": "Sinos de Bruma",
+    "author": "Codex",
+    "desc": "Uma aventura urbana em uma cidade viva, onde guildas, peregrinos, guardas e cultos seguem seus proprios interesses. Seu objetivo e simples: encontrar o Registro do Sino-Mor antes do toque da meia-noite.",
+    "genre": "Fantasia Urbana",
+    "icon": "🔔",
+    "startNode": "inicio",
+    "classes": [
+      {
+        "name": "Agente do Arquivo",
+        "icon": "📜",
+        "desc": "Leitor de selos, mapas e protocolos civis.",
+        "primaryAttr": "inteligencia",
+        "damageAttr": "sabedoria",
+        "dodgeAttr": "destreza",
+        "defenseAttr": "constituicao",
+        "bonusVida": 1,
+        "attrPoints": { "forca": 1, "destreza": 2, "inteligencia": 5, "carisma": 2, "sabedoria": 3, "constituicao": 1 },
+        "initialTags": ["sabe_ler_selos", "respeita_protocolos"],
+        "passiveDesc": "Letrado de campo: recebe bonus em investigacao e pode reconhecer lacres oficiais.",
+        "abilityIds": ["ab_leitura_de_selos", "ab_mapa_mental"]
+      },
+      {
+        "name": "Mensageiro dos Telhados",
+        "icon": "🗡️",
+        "desc": "Rapido, discreto e acostumado a rotas que nao aparecem nos mapas.",
+        "primaryAttr": "destreza",
+        "damageAttr": "forca",
+        "dodgeAttr": "destreza",
+        "defenseAttr": "sabedoria",
+        "bonusVida": 0,
+        "attrPoints": { "forca": 2, "destreza": 5, "inteligencia": 2, "carisma": 2, "sabedoria": 2, "constituicao": 1 },
+        "initialTags": ["conhece_atalhos", "passo_leve"],
+        "passiveDesc": "Rota alta: caminhos alternativos aparecem com mais frequencia quando ha risco de patrulha.",
+        "abilityIds": ["ab_rota_alta", "ab_folego_curto"]
+      },
+      {
+        "name": "Voz de Praca",
+        "icon": "🎭",
+        "desc": "Negociador, contador de historias e leitor de multidoes.",
+        "primaryAttr": "carisma",
+        "damageAttr": "sabedoria",
+        "dodgeAttr": "destreza",
+        "defenseAttr": "constituicao",
+        "bonusVida": 1,
+        "attrPoints": { "forca": 1, "destreza": 2, "inteligencia": 2, "carisma": 5, "sabedoria": 3, "constituicao": 1 },
+        "initialTags": ["fala_de_praca", "nome_na_rua"],
+        "passiveDesc": "Ouvido publico: a cidade fala mais quando voce pergunta do jeito certo.",
+        "abilityIds": ["ab_palavra_certa", "ab_escuta_da_rua"]
+      },
+      {
+        "name": "Vigia de Muralha",
+        "icon": "🛡️",
+        "desc": "Sobreviveu a vigias longas, motins pequenos e noites frias.",
+        "primaryAttr": "constituicao",
+        "damageAttr": "forca",
+        "dodgeAttr": "sabedoria",
+        "defenseAttr": "constituicao",
+        "bonusVida": 4,
+        "attrPoints": { "forca": 3, "destreza": 1, "inteligencia": 1, "carisma": 2, "sabedoria": 2, "constituicao": 5 },
+        "initialTags": ["postura_de_guarda", "aguenta_pressao"],
+        "passiveDesc": "Casca grossa: mais vida de combate e melhor resistencia a perdas bruscas.",
+        "abilityIds": ["ab_corpo_firme", "ab_postura_defensiva"]
+      }
+    ]
+  },
+  "abilities": [
+    {
+      "id": "ab_leitura_de_selos",
+      "name": "Leitura de Selos",
+      "icon": "📜",
+      "desc": "Voce reconhece marcas oficiais, contratos e falsificacoes simples.",
+      "type": "passive",
+      "context": "exploration",
+      "cooldown": 0,
+      "maxUses": 0,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "roll_bonus", "attrKey": "inteligencia", "value": 12, "duration": 0, "tag": "", "tagValue": true },
+        { "type": "tag_apply", "attrKey": "forca", "value": 0, "duration": 0, "tag": "olho_de_arquivo", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_mapa_mental",
+      "name": "Mapa Mental",
+      "icon": "🗺️",
+      "desc": "Reorganiza pistas e rotas por algumas cenas.",
+      "type": "active",
+      "context": "exploration",
+      "cooldown": 3,
+      "maxUses": 2,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "attr_temp", "attrKey": "sabedoria", "value": 1, "duration": 2, "tag": "", "tagValue": true },
+        { "type": "tag_timed", "attrKey": "forca", "value": 0, "duration": 2, "tag": "rotas_mapeadas", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_rota_alta",
+      "name": "Rota Alta",
+      "icon": "🏃",
+      "desc": "Voce encontra um caminho por telhados, andaimes ou varandas.",
+      "type": "active",
+      "context": "exploration",
+      "cooldown": 2,
+      "maxUses": 3,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "tag_timed", "attrKey": "destreza", "value": 0, "duration": 2, "tag": "em_rota_alta", "tagValue": true },
+        { "type": "attr_temp", "attrKey": "destreza", "value": 1, "duration": 1, "tag": "", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_folego_curto",
+      "name": "Folego Curto",
+      "icon": "💨",
+      "desc": "Uma explosao de movimento em momento critico.",
+      "type": "passive",
+      "context": "exploration",
+      "cooldown": 0,
+      "maxUses": 0,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "roll_bonus", "attrKey": "destreza", "value": 10, "duration": 0, "tag": "", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_palavra_certa",
+      "name": "Palavra Certa",
+      "icon": "🗣️",
+      "desc": "Por um curto periodo, suas perguntas parecem menos perigosas.",
+      "type": "active",
+      "context": "exploration",
+      "cooldown": 3,
+      "maxUses": 2,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "attr_temp", "attrKey": "carisma", "value": 2, "duration": 1, "tag": "", "tagValue": true },
+        { "type": "tag_timed", "attrKey": "carisma", "value": 0, "duration": 2, "tag": "conversa_aberta", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_escuta_da_rua",
+      "name": "Escuta da Rua",
+      "icon": "👂",
+      "desc": "Voce nota rumores uteis antes que virem problema.",
+      "type": "passive",
+      "context": "exploration",
+      "cooldown": 0,
+      "maxUses": 0,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "roll_bonus", "attrKey": "carisma", "value": 8, "duration": 0, "tag": "", "tagValue": true },
+        { "type": "roll_bonus", "attrKey": "sabedoria", "value": 6, "duration": 0, "tag": "", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_corpo_firme",
+      "name": "Corpo Firme",
+      "icon": "🛡️",
+      "desc": "Voce aguenta empurroes, frio e pancadas melhor que a media.",
+      "type": "passive",
+      "context": "exploration",
+      "cooldown": 0,
+      "maxUses": 0,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "vida_bonus", "attrKey": "constituicao", "value": 1, "duration": 0, "tag": "", "tagValue": true },
+        { "type": "roll_bonus", "attrKey": "constituicao", "value": 10, "duration": 0, "tag": "", "tagValue": true }
+      ]
+    },
+    {
+      "id": "ab_postura_defensiva",
+      "name": "Postura Defensiva",
+      "icon": "⛨",
+      "desc": "Recupera um pouco de folego em combate.",
+      "type": "active",
+      "context": "combat",
+      "cooldown": 2,
+      "maxUses": 2,
+      "requireTags": [],
+      "excludeTags": [],
+      "effects": [
+        { "type": "combat_heal", "attrKey": "constituicao", "value": 5, "duration": 0, "tag": "", "tagValue": true }
+      ]
+    }
+  ],
+  "nodes": {
+    "inicio": {
+      "id": "inicio",
+      "title": "Portao da Bruma",
+      "text": "Brumaclara nao para para te receber. Sinos pequenos avisam a troca de turno, carrocas disputam espaco com romeiros e uma fila de gente cansada tenta entrar antes do toque da tarde. Seu objetivo e claro: encontrar o Registro do Sino-Mor, um livro civil que prova quem pode ordenar o toque da meia-noite. Se o registro sumir, tres faccoes vao disputar a cidade em publico.",
+      "dialogues": [
+        { "speaker": "Guarda Lessa", "portrait": "🛡️", "text": "Se veio pedir audiencia, entre na fila. Se veio entregar documento, procure o Arquivo. Se veio causar, escolha outro dia.", "narrator": false },
+        { "speaker": "", "portrait": "", "text": "Ao fundo, uma procissao discute com estivadores. Ninguem parece esperar por voce.", "narrator": true }
+      ],
+      "choices": [
+        { "text": "Ir direto para a Praca dos Sinos", "next": "praca_dos_sinos", "points": 2 },
+        { "text": "Perguntar discretamente sobre o Registro", "next": "fila_do_portao", "attrCheck": "carisma", "difficulty": 5, "nextFail": "patrulha_toque", "pointsSuccess": 4, "pointsFail": -1, "tagEffects": [{ "tag": "perguntou_no_portao", "value": true }] },
+        { "text": "Subir por uma viela lateral antes que a fila feche", "next": "telhados_baixos", "attrCheck": "destreza", "difficulty": 6, "nextFail": "mercado_tenso", "pointsSuccess": 5 }
+      ]
+    },
+    "fila_do_portao": {
+      "id": "fila_do_portao",
+      "title": "Fila de Documentos",
+      "text": "Uma escriva de rua vende informacoes por moedas pequenas. Ela nao sabe onde esta o Registro, mas ouviu que tres copias de indice foram separadas: uma no mercado, uma nas docas e uma no templo fechado. Enquanto voces falam, a fila anda sem voce.",
+      "dialogues": [
+        { "speaker": "Escriva Nara", "portrait": "✒️", "text": "O Registro nao some sozinho. Quando papel importante desaparece, alguem quer que a cidade aceite uma mentira bem carimbada.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Seguir para o mercado atras da primeira copia de indice", "next": "mercado_tenso", "tagEffects": [{ "tag": "pista_indice_mercado", "value": true }] },
+        { "text": "Cortar caminho para as docas", "next": "docas_cinza", "tagEffects": [{ "tag": "pista_indice_docas", "value": true }] },
+        { "text": "Ir ao templo fechado", "next": "templo_fechado", "tagEffects": [{ "tag": "pista_indice_templo", "value": true }] }
+      ]
+    },
+    "telhados_baixos": {
+      "id": "telhados_baixos",
+      "title": "Telhados Baixos",
+      "text": "Dos telhados, Brumaclara revela outro desenho: guardas desviam multidoes, criancas carregam bilhetes entre chaminés, e alguem pinta marcas de giz azul nas paredes proximas ao Arquivo. A cidade tem veias secretas, mas elas cobram equilibrio.",
+      "choices": [
+        { "text": "Seguir as marcas de giz azul", "next": "beco_giz_azul", "tagEffects": [{ "tag": "viu_giz_azul", "value": true }] },
+        { "text": "Descer no mercado", "next": "mercado_tenso" },
+        { "text": "Continuar ate a torre antiga", "next": "torre_sino", "attrCheck": "destreza", "difficulty": 7, "nextFail": "patrulha_toque", "pointsSuccess": 6 }
+      ]
+    },
+    "praca_dos_sinos": {
+      "id": "praca_dos_sinos",
+      "title": "Praca dos Sinos",
+      "text": "A praca pulsa como um coracao fora do peito. A Guilda dos Sineiros levanta um palanque, os Peregrinos da Bruma cantam baixo, e os mercadores fecham tendas cedo. O Sino-Mor ainda esta mudo, mas todos agem como se ele ja tivesse escolhido um lado.",
+      "dialogues": [
+        { "speaker": "Pregoeiro", "portrait": "📣", "text": "Por ordem provisoria do Conselho, todo toque sem selo sera considerado motim!", "narrator": false },
+        { "speaker": "Peregrina Idosa", "portrait": "🕯️", "text": "Conselhos passam. Sinos lembram.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Ouvir os sineiros sem se aproximar", "next": "assembleia_gremio", "attrCheck": "sabedoria", "difficulty": 5, "pointsSuccess": 4, "tagEffects": [{ "tag": "ouviu_sineiros", "value": true }] },
+        { "text": "Investigar o mercado antes que feche", "next": "mercado_tenso" },
+        { "text": "Ir ao predio do Arquivo Civil", "next": "arquivo_externo" },
+        { "text": "Atravessar a multidao ate o templo", "next": "templo_fechado", "attrCheck": "constituicao", "difficulty": 5, "nextFail": "patrulha_toque" },
+        { "text": "Descer aos bairros baixos para entender por que a fome importa", "next": "bairros_baixos", "tagEffects": [{ "tag": "foi_aos_bairros_baixos", "value": true }] }
+      ]
+    },
+    "mercado_tenso": {
+      "id": "mercado_tenso",
+      "title": "Mercado das Toldas Molhadas",
+      "text": "O mercado cheira a peixe salgado, tinta fresca e medo. Ninguem fala alto sobre o Registro, mas varios falam alto demais sobre outras coisas. Um leiloeiro vende sinetas quebradas. Uma jovem calcula rotas de carroca. Dois homens da Guarda Civil discutem com uma padeiro sobre farinha confiscada.",
+      "dialogues": [
+        { "speaker": "Mara das Toldas", "portrait": "🧺", "text": "Se quer papel antigo, procure quem compra couro novo. Livro importante precisa de capa, e capa precisa de artesao.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Negociar com Mara por uma pista", "next": "oficina_encadernador", "attrCheck": "carisma", "difficulty": 5, "nextFail": "docas_cinza", "pointsSuccess": 5, "tagEffects": [{ "tag": "mara_ajudou", "value": true }] },
+        { "text": "Seguir os guardas que confiscaram farinha", "next": "patrulha_toque", "tagEffects": [{ "tag": "seguiu_guardas", "value": true }] },
+        { "text": "Examinar as sinetas quebradas", "next": "banca_sinetas", "attrCheck": "inteligencia", "difficulty": 6, "nextFail": "praca_dos_sinos", "tagEffects": [{ "tag": "notou_metal_falso", "value": true }] },
+        { "text": "Ir para as docas antes da mudanca da mare", "next": "docas_cinza" },
+        { "text": "Seguir a fila da sopa ate os fornos dos bairros baixos", "next": "fornos_baixos", "tagEffects": [{ "tag": "seguiu_fila_sopa", "value": true }] }
+      ]
+    },
+    "oficina_encadernador": {
+      "id": "oficina_encadernador",
+      "title": "Oficina do Encadernador",
+      "text": "A oficina esta aberta, mas o encadernador nao esta. Tiras de couro secam sobre fios. Na mesa, ha uma encomenda sem nome: capa de livro grande, lombada reforcada, encaixe para selo de bronze. O servico foi pago com moedas do templo e retirado por estivadores.",
+      "dialogues": [
+        { "speaker": "", "portrait": "", "text": "O mundo segue pratico: enquanto faccoes disputam simbolos, alguem compra cola, couro e silencio.", "narrator": true }
+      ],
+      "choices": [
+        { "text": "Guardar o recibo da encomenda", "next": "docas_cinza", "tagEffects": [{ "tag": "tem_recibo_capa", "value": true }], "points": 4 },
+        { "text": "Procurar marcas de selo na mesa", "next": "arquivo_externo", "attrCheck": "inteligencia", "difficulty": 5, "nextFail": "mercado_tenso", "tagEffects": [{ "tag": "selo_bronze", "value": true }] },
+        { "text": "Voltar a praca para comparar rumores", "next": "praca_dos_sinos" }
+      ]
+    },
+    "banca_sinetas": {
+      "id": "banca_sinetas",
+      "title": "Banca das Sinetas Quebradas",
+      "text": "As sinetas nao sao reliquias: sao copias recentes, envelhecidas com vinagre e fuligem. Uma delas traz, por dentro, o mesmo giz azul visto em muros proximos ao Arquivo. Alguem distribui simbolos falsos para confundir a cidade.",
+      "choices": [
+        { "text": "Seguir a marca de giz azul", "next": "beco_giz_azul", "tagEffects": [{ "tag": "viu_giz_azul", "value": true }] },
+        { "text": "Avisar Mara antes que vendam falsificacoes", "next": "mercado_tenso", "tagEffects": [{ "tag": "avisou_falsos", "value": true }], "points": 3 },
+        { "text": "Levar uma sineta falsa como prova", "next": "arquivo_externo", "tagEffects": [{ "tag": "prova_sineta_falsa", "value": true }] }
+      ]
+    },
+    "docas_cinza": {
+      "id": "docas_cinza",
+      "title": "Docas Cinza",
+      "text": "As docas trabalham mesmo sob toque de alerta. Barcos chegam, barcos partem, e caixas sem brasao passam mais rapido que caixas legais. Os estivadores nao gostam do Conselho, os fiscais nao gostam dos estivadores, e ambos fingem nao ver um armazem lacrado perto da agua.",
+      "dialogues": [
+        { "speaker": "Capataz Ivo", "portrait": "⚓", "text": "Nao sei de livro nenhum. Mas sei que livro pesado nao anda sem quatro maos e uma carroca.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Convencer Ivo a mostrar o armazem lacrado", "next": "armazem_lacrado", "attrCheck": "carisma", "difficulty": 6, "nextFail": "combate_estivadores", "pointsSuccess": 5 },
+        { "text": "Entrar pelo canal de drenagem", "next": "passagem_canal", "attrCheck": "destreza", "difficulty": 6, "nextFail": "combate_estivadores" },
+        { "text": "Procurar registros de carga", "next": "mesa_fiscal", "attrCheck": "inteligencia", "difficulty": 5, "nextFail": "patrulha_toque", "tagEffects": [{ "tag": "consultou_cargas", "value": true }] },
+        { "text": "Investigar quem cunhou as moedas de bronze azul", "next": "ponte_moedeiros", "tagRules": [{ "tag": "cera_azul", "mode": "hide", "invert": true }] },
+        { "text": "Voltar ao centro antes do toque seguinte", "next": "praca_dos_sinos" }
+      ]
+    },
+    "mesa_fiscal": {
+      "id": "mesa_fiscal",
+      "title": "Mesa do Fiscal Ausente",
+      "text": "O fiscal deixou livro-caixa, pena molhada e uma xicara ainda quente. Uma linha chama atencao: 'volume liturgico, destino: Torre Velha, liberado por selo emergencial'. A assinatura e tremida, como se quem assinou estivesse com pressa ou medo.",
+      "choices": [
+        { "text": "Copiar a linha do livro-caixa", "next": "torre_sino", "tagEffects": [{ "tag": "prova_livro_caixa", "value": true }], "points": 4 },
+        { "text": "Esperar o fiscal voltar", "next": "patrulha_toque", "attrCheck": "sabedoria", "difficulty": 6, "nextFail": "combate_guarda_civil", "tagEffects": [{ "tag": "viu_fiscal", "value": true }] },
+        { "text": "Seguir para o armazem lacrado", "next": "armazem_lacrado" }
+      ]
+    },
+    "armazem_lacrado": {
+      "id": "armazem_lacrado",
+      "title": "Armazem Lacrado",
+      "text": "O armazem contem caixas abertas, palha no chao e uma mesa improvisada. O Registro esteve aqui. Restam poeira no formato de um livro enorme, gotas de cera azul e uma faixa de procissao rasgada. Quem o levou seguiu para a Torre Velha.",
+      "choices": [
+        { "text": "Recolher cera azul como prova", "next": "torre_sino", "tagEffects": [{ "tag": "cera_azul", "value": true }], "points": 3 },
+        { "text": "Interrogar os carregadores atrasados", "next": "combate_estivadores", "attrCheck": "carisma", "difficulty": 7, "nextFail": "combate_estivadores", "pointsSuccess": 4, "tagEffects": [{ "tag": "carregadores_falaram", "value": true }] },
+        { "text": "Entrar no canal por onde a carroca saiu", "next": "passagem_canal" }
+      ]
+    },
+    "combate_estivadores": {
+      "id": "combate_estivadores",
+      "title": "Mal-entendido nas Docas",
+      "text": "Dois estivadores cansados decidem que voce e fiscal, ladrao ou problema. Talvez os tres. Eles nao querem matar ninguem; querem que a noite acabe sem mais patrulha nas docas.",
+      "combatId": "estivadores_nervosos",
+      "choices": []
+    },
+    "patrulha_toque": {
+      "id": "patrulha_toque",
+      "title": "Patrulha do Terceiro Toque",
+      "text": "A Guarda Civil fecha uma rua inteira para revistar sacolas, mangas e intencoes. Eles tambem nao parecem saber quem manda hoje. Um sargento consulta ordens contraditorias enquanto a multidao cresce dos dois lados.",
+      "dialogues": [
+        { "speaker": "Sargento Varo", "portrait": "🪖", "text": "Todo mundo tem urgencia. A cidade inteira virou excecao.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Mostrar postura calma e obedecer a revista", "next": "arquivo_externo", "attrCheck": "constituicao", "difficulty": 5, "nextFail": "combate_guarda_civil", "pointsSuccess": 3 },
+        { "text": "Usar conversa para passar sem revista", "next": "praca_dos_sinos", "attrCheck": "carisma", "difficulty": 6, "nextFail": "combate_guarda_civil", "tagEffects": [{ "tag": "enganou_patrulha", "value": true }] },
+        { "text": "Escapar por telhados e varais", "next": "telhados_baixos", "attrCheck": "destreza", "difficulty": 6, "nextFail": "combate_guarda_civil" }
+      ]
+    },
+    "combate_guarda_civil": {
+      "id": "combate_guarda_civil",
+      "title": "Revista Forcada",
+      "text": "A tensao estoura. A patrulha tenta te conter antes que a multidao perceba mais uma faísca.",
+      "combatId": "guarda_civil",
+      "choices": []
+    },
+    "arquivo_externo": {
+      "id": "arquivo_externo",
+      "title": "Arquivo Civil",
+      "text": "O Arquivo Civil parece um templo sem fe. Degraus gastos, colunas cinzentas, janelas altas e filas de gente segurando certidoes, testamentos, denuncias, mapas de heranca. O Registro do Sino-Mor deveria estar no subsolo. A porta do subsolo esta selada por ordem emergencial.",
+      "dialogues": [
+        { "speaker": "Arquivista Oren", "portrait": "📚", "text": "Se o Registro saiu daqui, nao saiu como roubo. Saiu como procedimento.", "narrator": false },
+        { "speaker": "Arquivista Oren", "portrait": "📚", "text": "Procedimento e uma palavra bonita para coisas que ninguem quer assinar.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Pedir acesso formal ao subsolo", "next": "arquivo_subsolo", "attrCheck": "inteligencia", "difficulty": 6, "nextFail": "patrulha_toque", "pointsSuccess": 5 },
+        { "text": "Mostrar provas reunidas para Oren", "next": "arquivo_subsolo", "tagRules": [{ "tag": "prova_livro_caixa", "mode": "hide", "invert": true }], "tagEffects": [{ "tag": "oren_confia", "value": true }], "points": 5 },
+        { "text": "Procurar a passagem antiga mencionada em mapas", "next": "passagem_canal", "attrCheck": "sabedoria", "difficulty": 6, "nextFail": "beco_giz_azul" },
+        { "text": "Pesquisar a fundacao do Sino-Mor nas atas antigas", "next": "casa_memoria", "attrCheck": "inteligencia", "difficulty": 6, "nextFail": "arquivo_subsolo", "tagEffects": [{ "tag": "pesquisou_fundacao", "value": true }] },
+        { "text": "Voltar a praca para entender a pressao politica", "next": "assembleia_gremio" }
+      ]
+    },
+    "beco_giz_azul": {
+      "id": "beco_giz_azul",
+      "title": "Beco do Giz Azul",
+      "text": "O beco nao leva a um esconderijo, mas a uma pequena escola noturna. Jovens copiam atas civis em silencio. Eles nao sao ladroes: sao aprendizes tentando preservar documentos antes que adultos poderosos os reescrevam.",
+      "dialogues": [
+        { "speaker": "Talia", "portrait": "🕯️", "text": "A cidade chama isso de vandalismo. Eu chamo de copia de seguranca.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Ajudar Talia a esconder as copias", "next": "arquivo_externo", "attrCheck": "destreza", "difficulty": 5, "pointsSuccess": 5, "tagEffects": [{ "tag": "talia_confia", "value": true }] },
+        { "text": "Pedir a Talia uma rota para o subsolo", "next": "passagem_canal", "tagEffects": [{ "tag": "rota_talia", "value": true }] },
+        { "text": "Entregar a existencia da escola a Guarda", "next": "patrulha_toque", "tagEffects": [{ "tag": "traiu_copistas", "value": true }], "sanidade": -1 }
+      ]
+    },
+    "passagem_canal": {
+      "id": "passagem_canal",
+      "title": "Passagem do Canal",
+      "text": "O canal antigo passa sob casas, oficinas e o Arquivo. A agua preta carrega papel picado, flores de procissao e fuligem. Acima, a cidade continua: brigas, preces, martelos, passos. Embaixo, tudo vira eco.",
+      "choices": [
+        { "text": "Avancar pelo tunel estreito", "next": "arquivo_subsolo", "attrCheck": "constituicao", "difficulty": 6, "nextFail": "combate_cultistas_canal", "vidaFail": -1 },
+        { "text": "Seguir os cantos vindos da agua", "next": "combate_cultistas_canal", "tagEffects": [{ "tag": "ouviu_canto_canal", "value": true }] },
+        { "text": "Subir por uma escada de manutencao", "next": "torre_sino", "attrCheck": "destreza", "difficulty": 6, "nextFail": "patrulha_toque" }
+      ]
+    },
+    "combate_cultistas_canal": {
+      "id": "combate_cultistas_canal",
+      "title": "Cantores do Canal",
+      "text": "Tres figuras com fitas azuis protegem caixas molhadas. Eles chamam o Registro de 'voz antiga' e nao querem que volte ao papel morto do Conselho.",
+      "combatId": "cantores_da_bruma",
+      "choices": []
+    },
+    "arquivo_subsolo": {
+      "id": "arquivo_subsolo",
+      "title": "Subsolo do Arquivo",
+      "text": "O subsolo guarda prateleiras de nascimento, divida, casamento e culpa. A estante do Sino-Mor esta vazia. Porem, o lugar de onde o Registro foi retirado conserva tres pistas: cera azul, poeira de corda naval e uma nota de requisicao para a Torre Velha.",
+      "dialogues": [
+        { "speaker": "Oren", "portrait": "📚", "text": "Entende agora? Nao roubaram apenas um livro. Roubaram a possibilidade de conferir a verdade.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Organizar as pistas e definir o destino provavel", "next": "torre_sino", "attrCheck": "inteligencia", "difficulty": 5, "pointsSuccess": 6, "tagEffects": [{ "tag": "deduziu_torre", "value": true }] },
+        { "text": "Procurar uma copia escondida do indice", "next": "indice_oculto", "attrCheck": "sabedoria", "difficulty": 7, "nextFail": "torre_sino", "pointsSuccess": 8 },
+        { "text": "Ir imediatamente para a Torre Velha", "next": "torre_sino" }
+      ]
+    },
+    "indice_oculto": {
+      "id": "indice_oculto",
+      "title": "Indice Oculto",
+      "text": "Atrás de uma tabua solta ha uma copia curta do indice do Registro. Ela nao contem o poder de ordenar o Sino-Mor, mas contem a primeira regra: nenhum toque e legitimo se houver fome declarada nos bairros baixos. A confiscacao de farinha muda tudo.",
+      "choices": [
+        { "text": "Levar o indice oculto como argumento publico", "next": "torre_sino", "tagEffects": [{ "tag": "tem_indice_oculto", "value": true }], "points": 8 },
+        { "text": "Memorizar a regra e deixar a copia escondida", "next": "torre_sino", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 7, "tagEffects": [{ "tag": "memorizou_regra_fome", "value": true }] }
+      ]
+    },
+    "templo_fechado": {
+      "id": "templo_fechado",
+      "title": "Templo da Bruma Baixa",
+      "text": "O templo fechou as portas, mas nao calou seus cantos. Do lado de fora, peregrinos acendem velas em tigelas de agua. Eles acreditam que o Sino-Mor nao pertence ao Conselho nem a Guilda, mas a cidade inteira. Alguns tambem parecem dispostos a esconder o Registro para provar isso.",
+      "dialogues": [
+        { "speaker": "Irmã Sol", "portrait": "🕯️", "text": "Se procura um livro, pergunte antes por que alguem teve medo dele.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Falar com Irma Sol sobre a fome nos bairros baixos", "next": "templo_confissao", "attrCheck": "carisma", "difficulty": 5, "tagEffects": [{ "tag": "irma_sol_ouviu", "value": true }] },
+        { "text": "Pedir acesso a cripta do Primeiro Toque", "next": "cripta_primeiro_toque", "attrCheck": "sabedoria", "difficulty": 6, "nextFail": "templo_confissao", "tagEffects": [{ "tag": "pediu_cripta", "value": true }] },
+        { "text": "Forcar entrada pela sacristia", "next": "combate_acolitos", "attrCheck": "forca", "difficulty": 7, "nextFail": "combate_acolitos" },
+        { "text": "Seguir para a Torre Velha, onde os cantos apontam", "next": "torre_sino" },
+        { "text": "Retornar a praca", "next": "praca_dos_sinos" }
+      ]
+    },
+    "templo_confissao": {
+      "id": "templo_confissao",
+      "title": "Confissao de Agua Fria",
+      "text": "Irma Sol admite que acolitos ajudaram a mover o Registro, mas jura que ele nao ficou no templo. Eles queriam impedir um toque usado para legitimar confiscos. A intencao talvez seja nobre; o metodo ja colocou a cidade perto de um motim.",
+      "choices": [
+        { "text": "Aceitar a ajuda de Irma Sol para entrar na Torre", "next": "torre_sino", "tagEffects": [{ "tag": "benção_da_bruma", "value": true }, { "tag": "irma_sol_ajuda", "value": true }], "points": 5 },
+        { "text": "Exigir nomes dos envolvidos", "next": "combate_acolitos", "attrCheck": "carisma", "difficulty": 7, "nextFail": "combate_acolitos", "tagEffects": [{ "tag": "tem_nomes_acolitos", "value": true }] },
+        { "text": "Voltar ao Arquivo para confrontar Oren com a versao do templo", "next": "arquivo_externo" }
+      ]
+    },
+    "combate_acolitos": {
+      "id": "combate_acolitos",
+      "title": "Acolitos em Panico",
+      "text": "Os acolitos nao parecem assassinos. Parecem jovens convencidos de que perder o Registro para o Conselho seria pior que ferir uma pessoa no escuro.",
+      "combatId": "acolitos_da_bruma",
+      "choices": []
+    },
+    "assembleia_gremio": {
+      "id": "assembleia_gremio",
+      "title": "Assembleia da Guilda dos Sineiros",
+      "text": "A Guilda discute em publico para esconder decisoes privadas. Mestres sineiros querem tocar meia-noite para declarar continuidade da ordem. Aprendizes querem suspender o toque ate a fome ser reconhecida. O lider da Guilda sorri como se ambos os lados fossem ferramentas.",
+      "dialogues": [
+        { "speaker": "Mestre Halvek", "portrait": "🔔", "text": "Sem toque, nao ha cidade. Sem cidade, nao ha pao, templo ou arquivo.", "narrator": false },
+        { "speaker": "Aprendiz Runa", "portrait": "🧰", "text": "Sem pao, mestre, a cidade toca so para si mesma.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Conversar com Runa longe do palanque", "next": "runa_bastidor", "attrCheck": "carisma", "difficulty": 5, "tagEffects": [{ "tag": "runa_confia", "value": true }] },
+        { "text": "Confrontar Halvek sobre o Registro", "next": "combate_milicia_gremio", "attrCheck": "inteligencia", "difficulty": 7, "nextFail": "combate_milicia_gremio", "tagEffects": [{ "tag": "halvek_exposto", "value": true }] },
+        { "text": "Procurar alguem do Conselho nos bastidores", "next": "conselho_provisorio", "attrCheck": "sabedoria", "difficulty": 5, "nextFail": "patrulha_toque", "tagEffects": [{ "tag": "viu_bastidor_conselho", "value": true }] },
+        { "text": "Ir para a Torre antes da Guilda marchar", "next": "torre_sino" },
+        { "text": "Voltar ao mercado para observar reacoes", "next": "mercado_tenso" }
+      ]
+    },
+    "runa_bastidor": {
+      "id": "runa_bastidor",
+      "title": "Bastidor de Cordas",
+      "text": "Runa mostra as maos marcadas por corda e bronze. Ela nao roubou o Registro, mas sabe que Halvek mandou fechar a Torre Velha. Tambem sabe que aprendizes planejam cortar as cordas do Sino-Mor se o Conselho tentar usar o toque contra os bairros baixos.",
+      "choices": [
+        { "text": "Pedir a Runa uma entrada tecnica para a torre", "next": "torre_sino", "tagEffects": [{ "tag": "entrada_de_runa", "value": true }], "points": 5 },
+        { "text": "Convencer Runa a nao cortar as cordas ainda", "next": "torre_sino", "attrCheck": "carisma", "difficulty": 6, "tagEffects": [{ "tag": "runa_conteve_aprendizes", "value": true }], "pointsSuccess": 5 },
+        { "text": "Usar a informacao para pressionar Halvek", "next": "combate_milicia_gremio", "tagEffects": [{ "tag": "pressionou_halvek", "value": true }] }
+      ]
+    },
+    "combate_milicia_gremio": {
+      "id": "combate_milicia_gremio",
+      "title": "Milicia da Guilda",
+      "text": "Homens com martelos de manutencao cercam a passagem. Eles nao usam uniforme de guarda; usam aventais de trabalho, o que torna tudo pior.",
+      "combatId": "milicia_da_guilda",
+      "choices": []
+    },
+    "bairros_baixos": {
+      "id": "bairros_baixos",
+      "title": "Bairros Baixos",
+      "text": "Nos bairros baixos, a crise deixa de ser palavra. E fila, panela vazia, crianca dormindo cedo para nao sentir fome, oficina aceitando pagamento em promessa. Ninguem fala do Registro como reliquia. Falam dele como uma porta: se a regra sobre fome for lida, confiscos param; se nao for, a cidade continua chamando violencia de abastecimento.",
+      "dialogues": [
+        { "speaker": "Mãe Joana", "portrait": "🍞", "text": "Nao quero governar sino nenhum. Quero que o pao que pagamos chegue antes que meus meninos aprendam a roubar.", "narrator": false },
+        { "speaker": "", "portrait": "", "text": "Ali, o Sino-Mor nao parece sagrado. Parece administrativo. E isso o torna mais perigoso.", "narrator": true }
+      ],
+      "choices": [
+        { "text": "Registrar testemunhos sobre a fome", "next": "fornos_baixos", "attrCheck": "carisma", "difficulty": 5, "pointsSuccess": 6, "tagEffects": [{ "tag": "testemunhos_da_fome", "value": true }] },
+        { "text": "Procurar a Casa de Memoria do bairro", "next": "casa_memoria", "tagEffects": [{ "tag": "buscou_memoria_popular", "value": true }] },
+        { "text": "Seguir moedas azuis usadas em compras suspeitas", "next": "ponte_moedeiros", "attrCheck": "sabedoria", "difficulty": 6, "nextFail": "mercado_tenso", "tagEffects": [{ "tag": "rastro_moedas_azuis", "value": true }] },
+        { "text": "Voltar a praca com o que viu", "next": "praca_dos_sinos", "tagEffects": [{ "tag": "viu_fome_de_perto", "value": true }] }
+      ]
+    },
+    "fornos_baixos": {
+      "id": "fornos_baixos",
+      "title": "Fornos Comunitarios",
+      "text": "Os fornos trabalham com menos farinha que promessa. Pessoas se revezam entre lenha, fila e vigilancia. O Conselho chama o lugar de ponto de distribuicao; os moradores chamam de ultima linha antes do saque. Um quadro de madeira lista nomes de ruas onde a comida nao chegou.",
+      "choices": [
+        { "text": "Ajudar a organizar a distribuicao", "next": "jardim_estatuas", "attrCheck": "inteligencia", "difficulty": 5, "pointsSuccess": 5, "tagEffects": [{ "tag": "distribuicao_organizada", "value": true }] },
+        { "text": "Levar a lista de ruas famintas como prova", "next": "conselho_provisorio", "tagEffects": [{ "tag": "lista_ruas_famintas", "value": true }], "points": 5 },
+        { "text": "Pedir que moradores testemunhem na Torre", "next": "jardim_estatuas", "attrCheck": "carisma", "difficulty": 7, "nextFail": "praca_dos_sinos", "pointsSuccess": 8, "tagEffects": [{ "tag": "moradores_virao", "value": true }] }
+      ]
+    },
+    "casa_memoria": {
+      "id": "casa_memoria",
+      "title": "Casa de Memoria",
+      "text": "A Casa de Memoria nao pertence ao Arquivo. Sao paredes cobertas por nomes, mapas desenhados por quem nao tinha direito a mapas, receitas de tempos de cerco e atas copiadas quando cartorios pegavam fogo. Ali voce encontra a origem do Sino-Mor: ele foi criado para impedir que uma unica autoridade declarasse ordem durante fome, guerra ou peste.",
+      "dialogues": [
+        { "speaker": "Velha Eda", "portrait": "🧶", "text": "O primeiro toque nao chamou obediencia. Chamou testemunhas.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Memorizar o juramento original do Sino-Mor", "next": "jardim_estatuas", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 8, "tagEffects": [{ "tag": "sabe_juramento_original", "value": true }] },
+        { "text": "Pedir a Eda para enviar testemunhas a Torre", "next": "jardim_estatuas", "attrCheck": "carisma", "difficulty": 6, "nextFail": "arquivo_externo", "tagEffects": [{ "tag": "memoria_envia_testemunhas", "value": true }] },
+        { "text": "Comparar a memoria popular com as atas do Arquivo", "next": "arquivo_subsolo", "attrCheck": "sabedoria", "difficulty": 6, "pointsSuccess": 6, "tagEffects": [{ "tag": "comparou_atas_memoria", "value": true }] }
+      ]
+    },
+    "ponte_moedeiros": {
+      "id": "ponte_moedeiros",
+      "title": "Ponte dos Moedeiros",
+      "text": "Sob a ponte, artesaos sem guilda derretem sobras de bronze para pagar aluguel. A moeda azul nao nasceu ali, mas passou por maos dali. Um moedeiro nervoso admite que recebeu encomenda para fabricar contrapesos falsos, pequenos o bastante para caberem no mecanismo da Torre.",
+      "dialogues": [
+        { "speaker": "Moedeiro Sef", "portrait": "🪙", "text": "Eu faco metal caber onde mandam. Quem decide o estrago e quem paga.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Convencer Sef a entregar o molde dos contrapesos", "next": "sala_contrapesos", "attrCheck": "carisma", "difficulty": 6, "nextFail": "docas_cinza", "pointsSuccess": 7, "tagEffects": [{ "tag": "tem_molde_contrapeso", "value": true }] },
+        { "text": "Examinar a liga metalica usada na fraude", "next": "sala_contrapesos", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 6, "tagEffects": [{ "tag": "prova_liga_azul", "value": true }] },
+        { "text": "Deixar Sef fora disso e seguir para a Torre", "next": "torre_sino", "tagEffects": [{ "tag": "poupou_moedeiro", "value": true }] }
+      ]
+    },
+    "conselho_provisorio": {
+      "id": "conselho_provisorio",
+      "title": "Sala do Conselho Provisorio",
+      "text": "O Conselho nao e uma mesa de vilões; e pior, e uma sala de pessoas com medo de perder controle. Alguns querem usar o toque para acalmar a cidade, outros sabem que a regra da fome tornaria os confiscos ilegais. Eles discutem como se a cidade fosse um mecanismo e nao gente.",
+      "dialogues": [
+        { "speaker": "Conselheira Maer", "portrait": "⚖️", "text": "Se a regra for lida sem plano de distribuicao, teremos saque. Se nao for lida, teremos revolta. Escolha seu nome bonito para desastre.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Forcar Maer a admitir a divisao do Conselho", "next": "jardim_estatuas", "attrCheck": "carisma", "difficulty": 7, "nextFail": "patrulha_toque", "pointsSuccess": 8, "tagEffects": [{ "tag": "conselho_dividido", "value": true }] },
+        { "text": "Oferecer um acordo: leitura publica em troca de distribuicao vigiada", "next": "jardim_estatuas", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 7, "tagEffects": [{ "tag": "acordo_distribuicao", "value": true }] },
+        { "text": "Roubar uma minuta que prova a leitura seletiva", "next": "torre_sino", "attrCheck": "destreza", "difficulty": 7, "nextFail": "combate_guarda_civil", "pointsSuccess": 8, "tagEffects": [{ "tag": "minuta_leitura_seletiva", "value": true }] }
+      ]
+    },
+    "cripta_primeiro_toque": {
+      "id": "cripta_primeiro_toque",
+      "title": "Cripta do Primeiro Toque",
+      "text": "A cripta abaixo do templo e mais velha que a cidade alta. Na pedra, o primeiro juramento esta gravado sem enfeite: 'Nenhum sino deve cobrir a fome, nenhum selo deve calar testemunha'. O templo guardou essa frase por seculos, mas tambem a usou quando lhe convinha.",
+      "choices": [
+        { "text": "Copiar o juramento gravado na pedra", "next": "jardim_estatuas", "attrCheck": "inteligencia", "difficulty": 5, "pointsSuccess": 7, "tagEffects": [{ "tag": "juramento_em_pedra", "value": true }] },
+        { "text": "Confrontar Irma Sol sobre o silencio do templo", "next": "templo_confissao", "attrCheck": "carisma", "difficulty": 6, "nextFail": "combate_acolitos", "tagEffects": [{ "tag": "templo_confrontado", "value": true }] },
+        { "text": "Levar uma lasca solta com a inscricao", "next": "torre_sino", "attrCheck": "forca", "difficulty": 6, "vidaFail": -1, "tagEffects": [{ "tag": "prova_pedra_juramento", "value": true }] }
+      ]
+    },
+    "jardim_estatuas": {
+      "id": "jardim_estatuas",
+      "title": "Jardim das Estatuas Sem Nome",
+      "text": "Entre a cidade alta e a baixa ha um jardim com estatuas cujos nomes foram raspados em alguma mudanca de regime. Hoje, gente de faccoes diferentes passa por ali fingindo nao se reconhecer. E um bom lugar para formar uma coalizao pequena demais para mandar, mas grande o bastante para testemunhar.",
+      "choices": [
+        { "text": "Unir moradores, copistas e aprendizes como testemunhas", "next": "sala_contrapesos", "attrCheck": "carisma", "difficulty": 7, "nextFail": "torre_sino", "pointsSuccess": 10, "tagEffects": [{ "tag": "coalizao_de_testemunhas", "value": true }] },
+        { "text": "Organizar provas em ordem clara para leitura publica", "next": "sala_contrapesos", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 7, "tagEffects": [{ "tag": "dossie_publico", "value": true }] },
+        { "text": "Seguir sozinho para nao expor mais ninguem", "next": "torre_sino", "tagEffects": [{ "tag": "foi_sozinho_torre", "value": true }] }
+      ]
+    },
+    "sala_contrapesos": {
+      "id": "sala_contrapesos",
+      "title": "Sala dos Contrapesos",
+      "text": "Antes da camara principal, a sala dos contrapesos revela a parte menos poetica do Sino-Mor. Cabos, rodas, travas, marcas de manutencao e pecas novas demais. Se alguem alterar o peso certo, o Sino toca mesmo com a corda principal presa. A cidade pode ser enganada por bronze e engenharia.",
+      "choices": [
+        { "text": "Remover os contrapesos falsos", "next": "escada_manutencao", "attrCheck": "inteligencia", "difficulty": 6, "pointsSuccess": 8, "tagEffects": [{ "tag": "contrapesos_removidos", "value": true }] },
+        { "text": "Sabotar o mecanismo para impedir qualquer toque", "next": "camara_sino", "attrCheck": "forca", "difficulty": 7, "nextFail": "combate_guardiao_torre", "pointsSuccess": 5, "tagEffects": [{ "tag": "sino_sabotado", "value": true }] },
+        { "text": "Aprender como tocar sem obedecer a Guilda", "next": "camara_sino", "attrCheck": "sabedoria", "difficulty": 7, "pointsSuccess": 9, "tagEffects": [{ "tag": "sabe_tocar_sino", "value": true }] },
+        { "text": "Subir para a camara principal", "next": "camara_sino" }
+      ]
+    },
+    "torre_sino": {
+      "id": "torre_sino",
+      "title": "Torre Velha",
+      "text": "A Torre Velha se ergue atras de casas tortas, mais antiga que o Conselho e mais teimosa que a Guilda. Gente de todos os lados converge para ela: guardas, sineiros, peregrinos, curiosos, vendedores de sopa. O Registro esta la dentro ou todos acreditam que esta, o que neste momento e quase a mesma coisa.",
+      "dialogues": [
+        { "speaker": "", "portrait": "", "text": "A cidade nao aguarda sua decisao. Ela ja esta decidindo em dezenas de vozes ao mesmo tempo.", "narrator": true }
+      ],
+      "choices": [
+        { "text": "Entrar pela porta tecnica indicada por Runa", "next": "escada_manutencao", "tagRules": [{ "tag": "entrada_de_runa", "mode": "hide", "invert": true }], "points": 4 },
+        { "text": "Entrar com apoio dos peregrinos", "next": "escada_manutencao", "tagRules": [{ "tag": "irma_sol_ajuda", "mode": "hide", "invert": true }], "points": 4 },
+        { "text": "Arrombar passagem durante a confusao", "next": "combate_guardiao_torre", "attrCheck": "forca", "difficulty": 7, "nextFail": "combate_guardiao_torre" },
+        { "text": "Subir por fora da torre", "next": "escada_manutencao", "attrCheck": "destreza", "difficulty": 7, "nextFail": "combate_guardiao_torre", "pointsSuccess": 6 },
+        { "text": "Tentar falar para a multidao abrir caminho", "next": "escada_manutencao", "attrCheck": "carisma", "difficulty": 7, "nextFail": "combate_guardiao_torre", "tagEffects": [{ "tag": "multidao_ouviu", "value": true }] },
+        { "text": "Procurar a sala dos contrapesos antes da camara", "next": "sala_contrapesos", "tagRules": [{ "tag": "tem_molde_contrapeso", "mode": "hide", "invert": true }], "points": 4 }
+      ]
+    },
+    "combate_guardiao_torre": {
+      "id": "combate_guardiao_torre",
+      "title": "Guardiao da Torre",
+      "text": "O guardiao da Torre nao pergunta seu nome. Ele olha para as ruas, para a multidao, para a porta atras de si, e decide que hoje ninguem passa sem pagar em suor.",
+      "combatId": "guardiao_da_torre",
+      "choices": []
+    },
+    "escada_manutencao": {
+      "id": "escada_manutencao",
+      "title": "Escada de Manutencao",
+      "text": "A escada sobe por dentro da pedra. A cada andar, pequenas janelas mostram fragmentos da cidade: uma mae puxando o filho para casa, aprendizes escondendo alicates, guardas dividindo pao confiscado, peregrinos molhando a testa com agua fria.",
+      "choices": [
+        { "text": "Subir direto ate a camara do Sino-Mor", "next": "camara_sino" },
+        { "text": "Parar para travar a porta e atrasar perseguidores", "next": "camara_sino", "attrCheck": "forca", "difficulty": 6, "pointsSuccess": 5, "tagEffects": [{ "tag": "porta_travada", "value": true }] },
+        { "text": "Ouvir a conversa no andar intermediario", "next": "conversa_intermediaria", "attrCheck": "sabedoria", "difficulty": 5, "tagEffects": [{ "tag": "ouviu_halvek", "value": true }] }
+      ]
+    },
+    "conversa_intermediaria": {
+      "id": "conversa_intermediaria",
+      "title": "Vozes no Andar Intermediario",
+      "text": "Halvek discute com um conselheiro. O plano nao era roubar o Registro para destrui-lo, mas para apresenta-lo no ultimo segundo, escolhendo qual regra ler em publico. O Registro e verdade; quem controla o tempo da leitura controla o sentido.",
+      "choices": [
+        { "text": "Guardar essa informacao para o confronto final", "next": "camara_sino", "tagEffects": [{ "tag": "sabe_plano_halvek", "value": true }], "points": 6 },
+        { "text": "Interromper a conversa agora", "next": "combate_halvek", "attrCheck": "carisma", "difficulty": 7, "nextFail": "combate_halvek", "tagEffects": [{ "tag": "halvek_sem_discurso", "value": true }] }
+      ]
+    },
+    "combate_halvek": {
+      "id": "combate_halvek",
+      "title": "Mestre Halvek",
+      "text": "Halvek nao luta como soldado. Luta como homem acostumado a puxar cordas pesadas e mandar outros cairem primeiro.",
+      "combatId": "mestre_halvek",
+      "choices": []
+    },
+    "camara_sino": {
+      "id": "camara_sino",
+      "title": "Camara do Sino-Mor",
+      "text": "O Sino-Mor ocupa a camara como uma lua de bronze. Sob ele, numa mesa de manutencao, esta o Registro. Nao brilha. Nao canta. E apenas um livro grande, pesado, cheio de regras que pessoas poderosas tentam fingir que sao destino.",
+      "dialogues": [
+        { "speaker": "Mestre Halvek", "portrait": "🔔", "text": "Deixe o livro comigo. Eu mantenho a cidade inteira de pe.", "narrator": false },
+        { "speaker": "Irma Sol", "portrait": "🕯️", "text": "De pe para quem?", "narrator": false },
+        { "speaker": "Runa", "portrait": "🧰", "text": "Se alguem tocar agora, metade da cidade vai achar que perdeu.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Convocar uma leitura publica com testemunhas de varias faccoes", "next": "julgamento_publico", "tagRules": [{ "tag": "coalizao_de_testemunhas", "mode": "hide", "invert": true }], "points": 12 },
+        { "text": "Propor um pacto entre Conselho, Guilda, templo e bairros baixos", "next": "pacto_quatro_vozes", "tagRules": [{ "tag": "acordo_distribuicao", "mode": "hide", "invert": true }], "points": 10 },
+        { "text": "Tocar o Sino-Mor em nome dos bairros baixos", "next": "toque_dos_bairros", "tagRules": [{ "tag": "sabe_tocar_sino", "mode": "hide", "invert": true }], "points": 10 },
+        { "text": "Ler em voz alta a regra sobre fome nos bairros baixos", "next": "julgamento_publico", "tagRules": [{ "tag": "tem_indice_oculto", "mode": "hide", "invert": true }], "points": 10, "tagEffects": [{ "tag": "regra_fome_publica", "value": true }] },
+        { "text": "Ler a regra memorizada sobre fome", "next": "julgamento_publico", "tagRules": [{ "tag": "memorizou_regra_fome", "mode": "hide", "invert": true }], "points": 8, "tagEffects": [{ "tag": "regra_fome_publica", "value": true }] },
+        { "text": "Transformar o Registro em arquivo vivo com os copistas", "next": "final_arquivo_vivo", "tagRules": [{ "tag": "copias_salvas", "mode": "hide", "invert": true }], "points": 12 },
+        { "text": "Apresentar provas de manipulacao antes que Halvek fale", "next": "julgamento_publico", "attrCheck": "inteligencia", "difficulty": 6, "nextFail": "final_neutro", "pointsSuccess": 10, "tagEffects": [{ "tag": "manipulacao_exposta", "value": true }] },
+        { "text": "Entregar o Registro a Irma Sol para impedir o toque", "next": "final_fuga", "tagEffects": [{ "tag": "registro_com_templo", "value": true }], "sanidade": -1 },
+        { "text": "Entregar o Registro a Halvek e evitar confronto imediato", "next": "final_neutro", "tagEffects": [{ "tag": "registro_com_guilda", "value": true }] },
+        { "text": "Tentar sair com o Registro sem negociar", "next": "combate_halvek", "attrCheck": "destreza", "difficulty": 8, "nextFail": "combate_halvek", "tagEffects": [{ "tag": "tentou_fugir_registro", "value": true }] }
+      ]
+    },
+    "julgamento_publico": {
+      "id": "julgamento_publico",
+      "title": "Leitura Diante da Cidade",
+      "text": "A camara da Torre nao comporta a cidade, mas as escadas, janelas e ruas abaixo carregam cada palavra. Halvek tenta interromper. Maer tenta enquadrar. Irma Sol tenta transformar regra em rito. Runa observa as cordas, pronta para impedir qualquer toque falso. Agora, mais que encontrar o Registro, voce precisa decidir que verdade merece virar ato publico.",
+      "dialogues": [
+        { "speaker": "Mestre Halvek", "portrait": "🔔", "text": "Uma leitura sem ordem vira tumulto.", "narrator": false },
+        { "speaker": "Velha Eda", "portrait": "🧶", "text": "Uma ordem sem testemunha vira mentira.", "narrator": false }
+      ],
+      "choices": [
+        { "text": "Ler o juramento original e a regra da fome juntos", "next": "final_republica_sinos", "tagRules": [{ "tag": "sabe_juramento_original", "mode": "hide", "invert": true }], "points": 15 },
+        { "text": "Usar o dossie publico para expor a leitura seletiva", "next": "final_arquivo_vivo", "tagRules": [{ "tag": "dossie_publico", "mode": "hide", "invert": true }], "points": 12 },
+        { "text": "Apresentar a ata que prova que o Conselho ja sabia da fome", "next": "final_bairros_em_pe", "tagRules": [{ "tag": "prova_conselho_sabia", "mode": "hide", "invert": true }], "points": 13 },
+        { "text": "Chamar a testemunha dos contrapesos falsos", "next": "final_republica_sinos", "tagRules": [{ "tag": "testemunha_contrapesos", "mode": "hide", "invert": true }], "points": 13 },
+        { "text": "Dar a palavra aos moradores dos bairros baixos", "next": "final_bairros_em_pe", "tagRules": [{ "tag": "moradores_virao", "mode": "hide", "invert": true }], "points": 12 },
+        { "text": "Negociar uma leitura parcial para evitar violencia imediata", "next": "final_conselho_reformado", "attrCheck": "carisma", "difficulty": 7, "nextFail": "final_guerra_dos_toques", "pointsSuccess": 10 },
+        { "text": "Ler apenas a regra da fome e encerrar", "next": "final_conclave", "points": 8 }
+      ]
+    },
+    "pacto_quatro_vozes": {
+      "id": "pacto_quatro_vozes",
+      "title": "Quatro Vozes na Torre",
+      "text": "Voce propoe uma mesa impossivel: Conselho para reconhecer a crise, Guilda para suspender toque politico, templo para devolver o Registro, bairros baixos para fiscalizar distribuicao. Ninguem gosta. Por isso mesmo, talvez funcione.",
+      "choices": [
+        { "text": "Conduzir o pacto com paciencia e provas", "next": "final_conselho_reformado", "attrCheck": "carisma", "difficulty": 6, "nextFail": "final_guerra_dos_toques", "pointsSuccess": 12, "tagEffects": [{ "tag": "pacto_assinado", "value": true }] },
+        { "text": "Exigir que o Conselho assine primeiro", "next": "final_bairros_em_pe", "tagRules": [{ "tag": "conselho_dividido", "mode": "hide", "invert": true }], "points": 10 },
+        { "text": "Usar a ameaca de revelar tudo para forcar acordo", "next": "final_silencio_bronze", "attrCheck": "inteligencia", "difficulty": 7, "nextFail": "final_guerra_dos_toques", "pointsSuccess": 8 }
+      ]
+    },
+    "toque_dos_bairros": {
+      "id": "toque_dos_bairros",
+      "title": "O Toque de Baixo",
+      "text": "Voce entende o mecanismo o bastante para puxar a cidade para fora do roteiro dos poderosos. Um toque sem autorizacao pode salvar os bairros baixos ou incendiar as ruas. A diferenca esta em quem escuta antes do bronze falar.",
+      "choices": [
+        { "text": "Tocar depois de anunciar a regra da fome", "next": "final_bairros_em_pe", "tagRules": [{ "tag": "testemunhos_da_fome", "mode": "hide", "invert": true }], "points": 14 },
+        { "text": "Tocar sem aviso para interromper Halvek", "next": "final_guerra_dos_toques", "points": -4 },
+        { "text": "Prender o badalo e transformar o nao-toque em protesto", "next": "final_silencio_bronze", "tagRules": [{ "tag": "sino_sabotado", "mode": "hide", "invert": true }], "points": 10 }
+      ]
+    },
+    "final_conclave": {
+      "id": "final_conclave",
+      "title": "Meia-noite Suspensa",
+      "text": "O Registro e lido diante de testemunhas suficientes para que ninguem consiga guardar a verdade de volta numa gaveta. O toque da meia-noite e suspenso ate que a fome nos bairros baixos seja reconhecida em ata. Nao ha paz plena. A Guilda se divide, o Conselho recua, o templo perde seu monopolio moral. Mas por uma noite, a cidade escuta mais que um sino.",
+      "ending": { "type": "victory", "title": "A Cidade Ouviu a Si Mesma", "points": 40 },
+      "choices": []
+    },
+    "final_republica_sinos": {
+      "id": "final_republica_sinos",
+      "title": "Republica dos Sinos Pequenos",
+      "text": "O juramento original e lido ao lado da regra da fome. A cidade entende que o Sino-Mor nunca foi feito para calar multidoes, mas para convocar testemunhas quando o poder tenta falar sozinho. Nas semanas seguintes, cada bairro escolhe sineiros civis, o Arquivo abre noites publicas de copia, e a Guilda perde o monopolio do toque. Nao nasce uma utopia. Nasce um metodo para brigar sem apagar a verdade.",
+      "ending": { "type": "victory", "title": "Nenhum Sino Sozinho", "points": 60 },
+      "choices": []
+    },
+    "final_bairros_em_pe": {
+      "id": "final_bairros_em_pe",
+      "title": "Bairros em Pe",
+      "text": "Os bairros baixos falam primeiro, e a cidade alta precisa ouvir em publico o que chamava de detalhe logistico. O toque seguinte nao declara ordem; declara emergencia de fome. Carrocas de farinha mudam de destino antes do amanhecer. O Conselho sobrevive, mas nunca mais consegue fingir que a cidade termina onde acabam suas varandas.",
+      "ending": { "type": "victory", "title": "Pao Antes do Bronze", "points": 52 },
+      "choices": []
+    },
+    "final_conselho_reformado": {
+      "id": "final_conselho_reformado",
+      "title": "Ata de Quatro Assinaturas",
+      "text": "O acordo e feio, cheio de ressalvas e escrito por gente que ainda desconfia entre si. Mesmo assim, a leitura publica acontece, a distribuicao passa a ter testemunhas, e a Guilda aceita dividir o controle tecnico da Torre. A cidade nao se transforma numa noite, mas ganha uma rachadura por onde entra ar.",
+      "ending": { "type": "victory", "title": "Reforma Sem Hino", "points": 45 },
+      "choices": []
+    },
+    "final_arquivo_vivo": {
+      "id": "final_arquivo_vivo",
+      "title": "Arquivo Vivo",
+      "text": "O Registro original volta ao Arquivo, mas deixa de ser unico. Copistas, padeiros, aprendizes e escrivas espalham copias conferidas pelos bairros. A partir daquela noite, qualquer autoridade que cite o Sino-Mor precisa enfrentar dezenas de leitores. O poder continua tentando escolher frases. A cidade aprende a pedir pagina e linha.",
+      "ending": { "type": "victory", "title": "Pagina e Linha", "points": 55 },
+      "choices": []
+    },
+    "final_silencio_bronze": {
+      "id": "final_silencio_bronze",
+      "title": "Silencio de Bronze",
+      "text": "O Sino-Mor nao toca. O silencio assusta mais que qualquer badalada. Sem som para fingir consenso, as faccoes precisam falar em voz humana, imperfeita, interrompida. O Registro permanece disputado, mas a noite termina sem decreto sagrado. Para alguns, covardia. Para outros, a primeira decisao honesta do dia.",
+      "ending": { "type": "neutral", "title": "A Noite Sem Toque", "points": 28 },
+      "choices": []
+    },
+    "final_guerra_dos_toques": {
+      "id": "final_guerra_dos_toques",
+      "title": "Guerra dos Toques",
+      "text": "Um sino responde outro. A Torre Velha toca, depois o templo, depois as oficinas da Guilda. Cada faccao jura que seu som e o verdadeiro. A cidade nao cai naquela noite, mas acorda partida por ritmos rivais. O Registro foi encontrado, sim. Mas a verdade chegou sem testemunhas suficientes e virou mais uma arma.",
+      "ending": { "type": "defeat", "title": "Cada Bronze Uma Ordem", "points": -20 },
+      "choices": []
+    },
+    "final_fuga": {
+      "id": "final_fuga",
+      "title": "O Livro Fora da Torre",
+      "text": "O Registro desaparece de novo, agora sob protecao dos peregrinos. O toque nao acontece. A cidade evita uma ordem injusta, mas ganha outro problema: nenhuma faccao confia nas outras para devolver o livro. Nas semanas seguintes, copias manuscritas circulam pelos bairros como pequenas brasas.",
+      "ending": { "type": "neutral", "title": "Verdade em Exilio", "points": 20 },
+      "choices": []
+    },
+    "final_neutro": {
+      "id": "final_neutro",
+      "title": "O Toque Controlado",
+      "text": "O Sino-Mor toca, mas tarde demais para parecer absoluto. Halvek e o Conselho salvam parte da aparencia, os peregrinos salvam parte da indignacao, e os bairros baixos salvam a memoria do que foi quase apagado. Voce cumpriu o objetivo de encontrar o Registro, mas a cidade ainda tera que disputar o significado dele.",
+      "ending": { "type": "neutral", "title": "Ordem com Rachaduras", "points": 12 },
+      "choices": []
+    },
+    "final_derrota": {
+      "id": "final_derrota",
+      "title": "Bronze Sobre Papel",
+      "text": "Quando o Sino-Mor toca sem leitura publica, a cidade recebe o som como ordem. O Registro reaparece dias depois, ja interpretado, ja resumido, ja conveniente. Alguns dizem que nao havia outro caminho. Outros comecam a copiar documentos em paredes.",
+      "ending": { "type": "defeat", "title": "A Verdade Chegou Tarde", "points": -10 },
+      "choices": []
+    }
+  },
+  "combats": {
+    "estivadores_nervosos": {
+      "name": "Estivadores Nervosos",
+      "icon": "⚓",
+      "vida": 24,
+      "vidaMax": 24,
+      "attrs": { "forca": 3, "destreza": 2, "constituicao": 3, "inteligencia": 1, "carisma": 1, "sabedoria": 2 },
+      "attackAttr": "forca",
+      "precisionAttr": "destreza",
+      "defenseAttr": "constituicao",
+      "damageDie": 6,
+      "damageBonus": 0,
+      "xpReward": 6,
+      "fleeAllowed": true,
+      "defeatPenalty": 1,
+      "victoryNode": "armazem_lacrado",
+      "defeatNode": "mesa_fiscal",
+      "fleeNode": "passagem_canal",
+      "victoryText": "Os estivadores cedem e apontam o armazem lacrado.",
+      "defeatText": "Eles te expulsam das docas, mas voce ouve algo sobre uma mesa fiscal.",
+      "fleeText": "Voce escapa pelo canal.",
+      "victoryTagEffects": [{ "tag": "venceu_estivadores", "value": true }],
+      "defeatTagEffects": [{ "tag": "docas_hostis", "value": true }],
+      "abilities": [
+        { "id": "ab_empurrao", "name": "Empurrao de Cais", "icon": "💢", "quotes": ["Sai das docas!"], "effects": [{ "type": "stun", "attr": "forca", "value": 1, "duration": 1 }], "triggerCondition": "roundMin", "triggerRoundMin": 2, "triggerHpPct": 40, "usageChance": 35, "cooldown": 2, "maxUses": 1 }
+      ]
+    },
+    "guarda_civil": {
+      "name": "Patrulha da Guarda Civil",
+      "icon": "🛡️",
+      "vida": 30,
+      "vidaMax": 30,
+      "attrs": { "forca": 3, "destreza": 3, "constituicao": 3, "inteligencia": 2, "carisma": 1, "sabedoria": 2 },
+      "attackAttr": "forca",
+      "precisionAttr": "destreza",
+      "defenseAttr": "constituicao",
+      "damageDie": 6,
+      "damageBonus": 1,
+      "xpReward": 8,
+      "fleeAllowed": true,
+      "defeatPenalty": 1,
+      "victoryNode": "arquivo_externo",
+      "defeatNode": "final_derrota",
+      "fleeNode": "mercado_tenso",
+      "victoryText": "A patrulha recua antes que a multidao transforme a briga em motim.",
+      "defeatText": "A patrulha te detem ate tarde demais.",
+      "fleeText": "Voce foge para o mercado.",
+      "victoryTagEffects": [{ "tag": "passou_patrulha", "value": true }],
+      "defeatTagEffects": [{ "tag": "detido_pela_guarda", "value": true }]
+    },
+    "cantores_da_bruma": {
+      "name": "Cantores da Bruma",
+      "icon": "🌫️",
+      "vida": 28,
+      "vidaMax": 28,
+      "attrs": { "forca": 2, "destreza": 2, "constituicao": 2, "inteligencia": 2, "carisma": 3, "sabedoria": 4 },
+      "attackAttr": "sabedoria",
+      "precisionAttr": "carisma",
+      "defenseAttr": "sabedoria",
+      "damageDie": 6,
+      "damageBonus": 1,
+      "xpReward": 10,
+      "fleeAllowed": true,
+      "defeatPenalty": 1,
+      "victoryNode": "arquivo_subsolo",
+      "defeatNode": "templo_fechado",
+      "fleeNode": "torre_sino",
+      "victoryText": "Os cantores deixam cair uma chave de manutencao do Arquivo.",
+      "defeatText": "Eles te expulsam para perto do templo.",
+      "fleeText": "Voce foge seguindo a agua ate a torre.",
+      "victoryTagEffects": [{ "tag": "venceu_cantores", "value": true }],
+      "abilities": [
+        { "id": "ab_canto_nevoa", "name": "Canto de Nevoa", "icon": "🎶", "quotes": ["A bruma lembra por nos."], "effects": [{ "type": "blind", "attr": "sabedoria", "value": 15, "duration": 2 }], "triggerCondition": "any", "triggerRoundMin": 1, "triggerHpPct": 50, "usageChance": 45, "cooldown": 2, "maxUses": 2 }
+      ]
+    },
+    "acolitos_da_bruma": {
+      "name": "Acolitos da Bruma",
+      "icon": "🕯️",
+      "vida": 26,
+      "vidaMax": 26,
+      "attrs": { "forca": 2, "destreza": 3, "constituicao": 2, "inteligencia": 2, "carisma": 2, "sabedoria": 3 },
+      "attackAttr": "destreza",
+      "precisionAttr": "sabedoria",
+      "defenseAttr": "constituicao",
+      "damageDie": 6,
+      "damageBonus": 0,
+      "xpReward": 7,
+      "fleeAllowed": true,
+      "defeatPenalty": 1,
+      "victoryNode": "templo_confissao",
+      "defeatNode": "torre_sino",
+      "fleeNode": "praca_dos_sinos",
+      "victoryText": "Os acolitos param de lutar e aceitam falar.",
+      "defeatText": "Eles te afastam, mas a confusao abre caminho para a torre.",
+      "fleeText": "Voce recua para a praca.",
+      "victoryTagEffects": [{ "tag": "acolitos_contidos", "value": true }]
+    },
+    "milicia_da_guilda": {
+      "name": "Milicia da Guilda",
+      "icon": "🔨",
+      "vida": 34,
+      "vidaMax": 34,
+      "attrs": { "forca": 4, "destreza": 2, "constituicao": 4, "inteligencia": 1, "carisma": 2, "sabedoria": 2 },
+      "attackAttr": "forca",
+      "precisionAttr": "forca",
+      "defenseAttr": "constituicao",
+      "damageDie": 8,
+      "damageBonus": 1,
+      "xpReward": 10,
+      "fleeAllowed": true,
+      "defeatPenalty": 1,
+      "victoryNode": "runa_bastidor",
+      "defeatNode": "torre_sino",
+      "fleeNode": "torre_sino",
+      "victoryText": "A milicia abre passagem para os bastidores.",
+      "defeatText": "Voce e empurrado para fora, na direcao da Torre Velha.",
+      "fleeText": "Voce escapa para a Torre Velha.",
+      "victoryTagEffects": [{ "tag": "guilda_recuou", "value": true }],
+      "abilities": [
+        { "id": "ab_martelo_pesado", "name": "Martelo Pesado", "icon": "🔨", "quotes": ["A corda obedece a mao forte!"], "effects": [{ "type": "weaken", "attr": "forca", "value": 25, "duration": 2 }], "triggerCondition": "roundMin", "triggerRoundMin": 2, "triggerHpPct": 40, "usageChance": 40, "cooldown": 2, "maxUses": 1 }
+      ]
+    },
+    "guardiao_da_torre": {
+      "name": "Guardiao da Torre",
+      "icon": "🗝️",
+      "vida": 38,
+      "vidaMax": 38,
+      "attrs": { "forca": 4, "destreza": 3, "constituicao": 4, "inteligencia": 2, "carisma": 1, "sabedoria": 3 },
+      "attackAttr": "forca",
+      "precisionAttr": "sabedoria",
+      "defenseAttr": "constituicao",
+      "damageDie": 8,
+      "damageBonus": 1,
+      "xpReward": 12,
+      "fleeAllowed": true,
+      "defeatPenalty": 2,
+      "victoryNode": "escada_manutencao",
+      "defeatNode": "final_derrota",
+      "fleeNode": "patrulha_toque",
+      "victoryText": "O guardiao reconhece determinacao suficiente para abrir a passagem.",
+      "defeatText": "A Torre fecha. O toque acontece sem voce.",
+      "fleeText": "Voce recua para as ruas tomadas pela patrulha.",
+      "victoryTagEffects": [{ "tag": "passou_guardiao", "value": true }]
+    },
+    "mestre_halvek": {
+      "name": "Mestre Halvek",
+      "icon": "🔔",
+      "vida": 44,
+      "vidaMax": 44,
+      "attrs": { "forca": 4, "destreza": 3, "constituicao": 4, "inteligencia": 4, "carisma": 4, "sabedoria": 3 },
+      "attackAttr": "carisma",
+      "precisionAttr": "inteligencia",
+      "defenseAttr": "constituicao",
+      "damageDie": 8,
+      "damageBonus": 2,
+      "xpReward": 18,
+      "fleeAllowed": false,
+      "defeatPenalty": 2,
+      "victoryNode": "camara_sino",
+      "defeatNode": "final_neutro",
+      "fleeNode": "",
+      "victoryText": "Halvek perde o controle da sala, mas nao da cidade inteira.",
+      "defeatText": "Halvek controla o momento da leitura.",
+      "victoryTagEffects": [{ "tag": "halvek_derrotado", "value": true }],
+      "defeatTagEffects": [{ "tag": "halvek_controla_leitura", "value": true }],
+      "abilities": [
+        { "id": "ab_ordem_de_bronze", "name": "Ordem de Bronze", "icon": "🔔", "quotes": ["A cidade precisa de uma voz."], "effects": [{ "type": "fear", "attr": "carisma", "value": 1, "duration": 1 }], "triggerCondition": "any", "triggerRoundMin": 1, "triggerHpPct": 50, "usageChance": 35, "cooldown": 2, "maxUses": 2 },
+        { "id": "ab_postura_contra", "name": "Postura de Contra-toque", "icon": "⚡", "quotes": ["Voce puxa uma corda que nao entende."], "effects": [{ "type": "counter", "attr": "forca", "value": 3, "duration": 2 }], "triggerCondition": "lowHp", "triggerRoundMin": 3, "triggerHpPct": 45, "usageChance": 55, "cooldown": 3, "maxUses": 1 }
+      ]
+    }
+  },
+  "sidequests": [
+    {
+      "id": "sq_farinha_confiscada",
+      "title": "Farinha Confiscada",
+      "desc": "Ajudar um padeiro a recuperar sacos de farinha antes que a guarda os leve.",
+      "declineText": "Nao se envolver com a confiscacao agora",
+      "triggerNodes": ["mercado_tenso", "patrulha_toque"],
+      "requireTags": [],
+      "excludeTags": ["farinha_resolvida"],
+      "startNode": "sq_farinha_inicio",
+      "nodes": {
+        "sq_farinha_inicio": {
+          "id": "sq_farinha_inicio",
+          "title": "Sacos Marcados",
+          "text": "O padeiro mostra sacos de farinha marcados como 'emergencia civil'. Ele diz que os bairros baixos ja pagaram por eles.",
+          "choices": [
+            { "text": "Negociar com o cabo responsavel", "next": "sq_farinha_vitoria", "attrCheck": "carisma", "difficulty": 6, "nextFail": "sq_farinha_falha" },
+            { "text": "Mover os sacos por uma viela", "next": "sq_farinha_vitoria", "attrCheck": "destreza", "difficulty": 6, "nextFail": "sq_farinha_falha" }
+          ]
+        },
+        "sq_farinha_vitoria": {
+          "id": "sq_farinha_vitoria",
+          "title": "Pao Antes do Toque",
+          "text": "A farinha chega aos fornos comunitarios. Ninguem te aclama; estao ocupados demais fazendo pao.",
+          "ending": { "type": "victory", "title": "Fornos Acesos" },
+          "choices": []
+        },
+        "sq_farinha_falha": {
+          "id": "sq_farinha_falha",
+          "title": "Carroca Lacrada",
+          "text": "A farinha vai embora sob escolta. O padeiro nao te culpa, mas tambem nao sorri.",
+          "ending": { "type": "defeat", "title": "Pao Adiado" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 1, "sabedoria": 0, "constituicao": 0 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 0, "sabedoria": -1, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 8,
+      "scoreFail": -3,
+      "victoryTagEffects": [{ "tag": "farinha_resolvida", "value": true }, { "tag": "bairros_baixos_apoiam", "value": true }],
+      "defeatTagEffects": [{ "tag": "farinha_perdida", "value": true }]
+    },
+    {
+      "id": "sq_copistas_giz",
+      "title": "Copistas do Giz Azul",
+      "desc": "Proteger jovens copistas que estao duplicando atas civis antes que sejam apreendidas.",
+      "declineText": "Deixar os copistas resolverem seus proprios riscos",
+      "triggerNodes": ["beco_giz_azul", "arquivo_externo"],
+      "requireTags": ["viu_giz_azul"],
+      "excludeTags": ["traiu_copistas"],
+      "startNode": "sq_copistas_inicio",
+      "nodes": {
+        "sq_copistas_inicio": {
+          "id": "sq_copistas_inicio",
+          "title": "Caixas de Copias",
+          "text": "Talia precisa mover caixas de copias antes que fiscais cheguem. Cada caixa salva e uma versao da cidade que nao depende do Conselho.",
+          "choices": [
+            { "text": "Criar uma distracao na rua", "next": "sq_copistas_vitoria", "attrCheck": "carisma", "difficulty": 6, "nextFail": "sq_copistas_falha" },
+            { "text": "Carregar as caixas pelo canal estreito", "next": "sq_copistas_vitoria", "attrCheck": "constituicao", "difficulty": 6, "nextFail": "sq_copistas_falha" }
+          ]
+        },
+        "sq_copistas_vitoria": {
+          "id": "sq_copistas_vitoria",
+          "title": "Copias Espalhadas",
+          "text": "As copias somem em casas, padarias e oficinas. Talia nao promete lealdade, apenas memoria.",
+          "ending": { "type": "victory", "title": "Memoria Distribuida" },
+          "choices": []
+        },
+        "sq_copistas_falha": {
+          "id": "sq_copistas_falha",
+          "title": "Fiscais na Porta",
+          "text": "Parte das copias e apreendida. Outra parte escapa. O bastante para doer, nao o bastante para vencer.",
+          "ending": { "type": "neutral", "title": "Metade Salva" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 0, "destreza": 1, "inteligencia": 1, "carisma": 0, "sabedoria": 0, "constituicao": 0 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 0, "sabedoria": 0, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 10,
+      "scoreFail": 2,
+      "victoryTagEffects": [{ "tag": "copias_salvas", "value": true }],
+      "defeatTagEffects": [{ "tag": "copias_parciais", "value": true }]
+    },
+    {
+      "id": "sq_corda_partida",
+      "title": "A Corda Partida",
+      "desc": "Uma aprendiz da Guilda pede ajuda para impedir que uma corda sabotada mate alguem.",
+      "declineText": "Nao mexer na manutencao da Guilda",
+      "triggerNodes": ["assembleia_gremio", "runa_bastidor", "torre_sino"],
+      "requireTags": [],
+      "excludeTags": ["corda_resolvida"],
+      "startNode": "sq_corda_inicio",
+      "nodes": {
+        "sq_corda_inicio": {
+          "id": "sq_corda_inicio",
+          "title": "Fibra Cortada",
+          "text": "A corda secundaria do Sino-Mor foi cortada quase ate o centro. Se alguem tocar com forca, ela pode chicotear a camara.",
+          "choices": [
+            { "text": "Reparar a corda com tecnica improvisada", "next": "sq_corda_vitoria", "attrCheck": "inteligencia", "difficulty": 6, "nextFail": "sq_corda_falha" },
+            { "text": "Segurar a corda enquanto Runa amarra o no", "next": "sq_corda_vitoria", "attrCheck": "forca", "difficulty": 6, "nextFail": "sq_corda_falha" }
+          ]
+        },
+        "sq_corda_vitoria": {
+          "id": "sq_corda_vitoria",
+          "title": "No Seguro",
+          "text": "A corda segura. Runa respira como se tivesse acabado de salvar um inimigo e uma amiga ao mesmo tempo.",
+          "ending": { "type": "victory", "title": "Toque Sem Sangue" },
+          "choices": []
+        },
+        "sq_corda_falha": {
+          "id": "sq_corda_falha",
+          "title": "Chicote de Bronze",
+          "text": "A corda estala e fere um aprendiz. O toque ainda pode acontecer, mas agora carrega sangue na madeira.",
+          "ending": { "type": "defeat", "title": "Corda Sangrenta" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 1, "destreza": 0, "inteligencia": 0, "carisma": 0, "sabedoria": 0, "constituicao": 1 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 0, "sabedoria": -1, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 8,
+      "scoreFail": -4,
+      "victoryTagEffects": [{ "tag": "corda_resolvida", "value": true }, { "tag": "runa_respeita", "value": true }],
+      "defeatTagEffects": [{ "tag": "aprendiz_ferido", "value": true }]
+    },
+    {
+      "id": "sq_crianca_sino",
+      "title": "A Crianca da Sinetinha",
+      "desc": "Uma crianca perdeu a mae na multidao e segura uma sineta falsa como se fosse mapa.",
+      "declineText": "A multidao vai cuidar dela",
+      "triggerNodes": ["praca_dos_sinos", "mercado_tenso", "templo_fechado"],
+      "requireTags": [],
+      "excludeTags": ["crianca_reunida"],
+      "startNode": "sq_crianca_inicio",
+      "nodes": {
+        "sq_crianca_inicio": {
+          "id": "sq_crianca_inicio",
+          "title": "Sinetinha de Lata",
+          "text": "A crianca diz que a mae foi atras de sopa e nao voltou. A sineta em sua mao tem a mesma marca falsa da banca do mercado.",
+          "choices": [
+            { "text": "Perguntar com calma e seguir detalhes", "next": "sq_crianca_vitoria", "attrCheck": "sabedoria", "difficulty": 5, "nextFail": "sq_crianca_falha" },
+            { "text": "Chamar atencao da multidao para encontrar a mae", "next": "sq_crianca_vitoria", "attrCheck": "carisma", "difficulty": 6, "nextFail": "sq_crianca_falha" }
+          ]
+        },
+        "sq_crianca_vitoria": {
+          "id": "sq_crianca_vitoria",
+          "title": "Mao Encontrada",
+          "text": "A mae aparece, coberta de fuligem da cozinha comunitaria. Elas se abracam rapido, como quem nao tem tempo de transformar alivio em cena.",
+          "ending": { "type": "victory", "title": "Reencontro Pequeno" },
+          "choices": []
+        },
+        "sq_crianca_falha": {
+          "id": "sq_crianca_falha",
+          "title": "Multidao Fechada",
+          "text": "A crianca e levada por peregrinos para um canto seguro. Nao e o pior fim, mas tambem nao e o abraco esperado.",
+          "ending": { "type": "neutral", "title": "Abrigo Provisorio" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 1, "sabedoria": 1, "constituicao": 0 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": 0, "sabedoria": 0, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 7,
+      "scoreFail": 1,
+      "victoryTagEffects": [{ "tag": "crianca_reunida", "value": true }, { "tag": "maes_da_praca_apoiam", "value": true }],
+      "defeatTagEffects": [{ "tag": "crianca_abrigada", "value": true }]
+    },
+    {
+      "id": "sq_ata_queimada",
+      "title": "A Ata Queimada",
+      "desc": "Recuperar fragmentos de uma ata que prova que a crise de fome ja tinha sido reconhecida pelo Conselho.",
+      "declineText": "Nao perder tempo com cinzas e carimbos",
+      "triggerNodes": ["conselho_provisorio", "arquivo_externo", "casa_memoria"],
+      "requireTags": [],
+      "excludeTags": ["ata_recuperada"],
+      "startNode": "sq_ata_inicio",
+      "nodes": {
+        "sq_ata_inicio": {
+          "id": "sq_ata_inicio",
+          "title": "Cinzas com Carimbo",
+          "text": "Uma caixa de documentos queimados ainda conserva fragmentos legiveis. O carimbo e do Conselho, mas a margem tem anotacoes de bairro.",
+          "choices": [
+            { "text": "Reconstruir a ata por ordem de pagina", "next": "sq_ata_vitoria", "attrCheck": "inteligencia", "difficulty": 7, "nextFail": "sq_ata_falha" },
+            { "text": "Comparar os fragmentos com memorias orais", "next": "sq_ata_vitoria", "attrCheck": "sabedoria", "difficulty": 6, "nextFail": "sq_ata_falha" }
+          ]
+        },
+        "sq_ata_vitoria": {
+          "id": "sq_ata_vitoria",
+          "title": "Ata Refeita",
+          "text": "A ata nao esta completa, mas prova o suficiente: o Conselho sabia da fome antes dos confiscos.",
+          "ending": { "type": "victory", "title": "Prova Queimada, Prova Viva" },
+          "choices": []
+        },
+        "sq_ata_falha": {
+          "id": "sq_ata_falha",
+          "title": "Cinza Sem Forma",
+          "text": "Os fragmentos se desfazem. Resta a suspeita, mas suspeita sozinha e facil de enterrar.",
+          "ending": { "type": "defeat", "title": "Carimbo Perdido" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 0, "destreza": 0, "inteligencia": 1, "carisma": 0, "sabedoria": 1, "constituicao": 0 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": -1, "carisma": 0, "sabedoria": 0, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 10,
+      "scoreFail": -2,
+      "victoryTagEffects": [{ "tag": "ata_recuperada", "value": true }, { "tag": "prova_conselho_sabia", "value": true }],
+      "defeatTagEffects": [{ "tag": "ata_perdida", "value": true }]
+    },
+    {
+      "id": "sq_moedeiro_desaparecido",
+      "title": "O Moedeiro Desaparecido",
+      "desc": "Encontrar o aprendiz que carregou contrapesos falsos para a Torre antes que a Guilda o silencie.",
+      "declineText": "Deixar o aprendiz cuidar do proprio sumico",
+      "triggerNodes": ["ponte_moedeiros", "docas_cinza", "sala_contrapesos"],
+      "requireTags": [],
+      "excludeTags": ["aprendiz_moedeiro_salvo"],
+      "startNode": "sq_moedeiro_inicio",
+      "nodes": {
+        "sq_moedeiro_inicio": {
+          "id": "sq_moedeiro_inicio",
+          "title": "Rastro de Limalha",
+          "text": "Pequenos brilhos de bronze azul levam a um porao alugado. La dentro, alguem respira baixo demais para estar dormindo.",
+          "choices": [
+            { "text": "Entrar sem assustar o aprendiz", "next": "sq_moedeiro_vitoria", "attrCheck": "destreza", "difficulty": 6, "nextFail": "sq_moedeiro_falha" },
+            { "text": "Prometer protecao em troca da verdade", "next": "sq_moedeiro_vitoria", "attrCheck": "carisma", "difficulty": 6, "nextFail": "sq_moedeiro_falha" }
+          ]
+        },
+        "sq_moedeiro_vitoria": {
+          "id": "sq_moedeiro_vitoria",
+          "title": "Testemunha de Bronze",
+          "text": "O aprendiz aceita testemunhar. Ele nao sabe quem planejou tudo, mas sabe quem retirou os contrapesos da oficina.",
+          "ending": { "type": "victory", "title": "Uma Mao Viu o Metal" },
+          "choices": []
+        },
+        "sq_moedeiro_falha": {
+          "id": "sq_moedeiro_falha",
+          "title": "Janela Aberta",
+          "text": "Quando voce entra, o aprendiz ja fugiu pela janela. Fica apenas um molde quebrado e medo no ar.",
+          "ending": { "type": "neutral", "title": "Testemunha Perdida" },
+          "choices": []
+        }
+      },
+      "attrRewards": { "forca": 0, "destreza": 1, "inteligencia": 0, "carisma": 1, "sabedoria": 0, "constituicao": 0 },
+      "failDebuffs": { "forca": 0, "destreza": 0, "inteligencia": 0, "carisma": -1, "sabedoria": 0, "constituicao": 0 },
+      "failPenalty": false,
+      "scoreSuccess": 9,
+      "scoreFail": 1,
+      "victoryTagEffects": [{ "tag": "aprendiz_moedeiro_salvo", "value": true }, { "tag": "testemunha_contrapesos", "value": true }],
+      "defeatTagEffects": [{ "tag": "aprendiz_moedeiro_sumiu", "value": true }]
+    }
+  ],
+  "randomEncounters": [
+    {
+      "id": "enc_procissao_cruza",
+      "title": "Procissao Cruzada",
+      "icon": "🕯️",
+      "text": "Uma procissao atravessa a rua sem pedir licenca. Guardas reclamam, peregrinos cantam, comerciantes fecham caminho.",
+      "type": "neutral",
+      "weight": 2,
+      "once": false,
+      "triggerNodes": [],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Aguardar e observar quem lidera", "attrCheck": "sabedoria", "difficulty": 5, "successText": "Voce nota que a procissao abre passagem para caixas pequenas marcadas com cera azul.", "failText": "Voce perde tempo e a rua fecha atras de voce.", "successPoints": 3, "failPoints": 0, "successGrantTags": ["viu_caixas_procissao"], "failGrantTags": [] },
+        { "text": "Abrir caminho pela lateral", "attrCheck": "destreza", "difficulty": 6, "successText": "Voce atravessa sem empurrar ninguem.", "failText": "Um tropeço te custa folego.", "successPoints": 2, "failVida": -1, "successGrantTags": [], "failGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_boato_falso",
+      "title": "Boato Conveniente",
+      "icon": "👂",
+      "text": "Um homem muito seguro de si espalha que o Registro ja foi queimado. Ele repete a frase com ritmo ensaiado.",
+      "type": "harmful",
+      "weight": 2,
+      "once": true,
+      "triggerNodes": ["mercado_tenso", "praca_dos_sinos", "assembleia_gremio"],
+      "requireTags": [],
+      "excludeTags": ["boato_desmentido"],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Desmontar o boato em publico", "attrCheck": "carisma", "difficulty": 6, "successText": "As pessoas param de repetir a frase. Algumas parecem envergonhadas.", "failText": "O boato ganha uma segunda versao, agora incluindo voce.", "successPoints": 5, "failSanidade": -1, "successGrantTags": ["boato_desmentido"], "failGrantTags": ["boato_colou"] },
+        { "text": "Seguir o homem discretamente", "attrCheck": "destreza", "difficulty": 6, "successText": "Ele recebe moedas de um mensageiro da Guilda.", "failText": "Voce o perde numa esquina cheia.", "successPoints": 4, "successGrantTags": ["ligou_boato_guilda"], "failGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_sopa_comunitaria",
+      "title": "Sopa Comunitaria",
+      "icon": "🍲",
+      "text": "Uma fila de sopa se forma sob toldos improvisados. Quem cozinha nao pergunta faccao.",
+      "type": "beneficial",
+      "weight": 1,
+      "once": true,
+      "triggerNodes": ["mercado_tenso", "praca_dos_sinos", "templo_fechado"],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Ajudar a servir por alguns minutos", "attrCheck": "", "difficulty": 5, "successText": "Voce perde tempo, mas ganha noticias honestas.", "successSanidade": 1, "successPoints": 3, "successGrantTags": ["ouviu_bairros_baixos"] },
+        { "text": "Comer rapido e seguir", "attrCheck": "", "difficulty": 5, "successText": "Calor simples ainda e calor.", "successVida": 1, "successPoints": 1, "successGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_chuva_de_cinza",
+      "title": "Chuva de Cinza",
+      "icon": "🌧️",
+      "text": "Cinza fina cai sobre a rua. Alguem queimou papel em grande quantidade perto dos bairros administrativos.",
+      "type": "harmful",
+      "weight": 1,
+      "once": true,
+      "triggerNodes": [],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Recolher fragmentos legiveis", "attrCheck": "inteligencia", "difficulty": 6, "successText": "Um fragmento menciona 'leitura seletiva do Registro'.", "failText": "A cinza entra nos olhos e na garganta.", "successPoints": 5, "failVida": -1, "successGrantTags": ["fragmento_leitura_seletiva"], "failGrantTags": [] },
+        { "text": "Cobrir o rosto e seguir", "attrCheck": "constituicao", "difficulty": 5, "successText": "Voce atravessa a cinza sem perder ritmo.", "failText": "A respiracao pesa.", "successPoints": 1, "failVida": -1, "successGrantTags": [], "failGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_aprendiz_ferido",
+      "title": "Aprendiz Ferido",
+      "icon": "🩹",
+      "text": "Um aprendiz da Guilda cambaleia com a mao queimada por corda. Ele nao sabe se quer ajuda ou silencio.",
+      "type": "neutral",
+      "weight": 1,
+      "once": true,
+      "triggerNodes": ["assembleia_gremio", "torre_sino", "escada_manutencao"],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Ajudar sem perguntar nomes", "attrCheck": "sabedoria", "difficulty": 5, "successText": "Ele aponta uma entrada de manutencao antes de desaparecer.", "failText": "Ele foge antes de confiar em voce.", "successPoints": 4, "successGrantTags": ["entrada_de_runa"], "failGrantTags": [] },
+        { "text": "Pressionar por informacao", "attrCheck": "carisma", "difficulty": 7, "successText": "Assustado, ele revela que Halvek fechou a Torre.", "failText": "Ele grita por ajuda.", "successPoints": 4, "failPoints": -2, "successGrantTags": ["halvek_fechou_torre"], "failGrantTags": ["aprendiz_assustado"] }
+      ]
+    },
+    {
+      "id": "enc_moeda_de_bronze",
+      "title": "Moeda de Bronze Azul",
+      "icon": "🪙",
+      "text": "Uma moeda estranha rola ate seu pe. O bronze tem a mesma tonalidade da cera usada nos lacres falsos.",
+      "type": "beneficial",
+      "weight": 1,
+      "once": true,
+      "triggerNodes": [],
+      "requireTags": ["cera_azul"],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Comparar a moeda com a cera azul", "attrCheck": "inteligencia", "difficulty": 5, "successText": "A liga metalica vem de oficinas da Guilda.", "failText": "A semelhanca parece real, mas voce nao fecha a prova.", "successPoints": 5, "successGrantTags": ["prova_moeda_guilda"], "failGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_toque_menor",
+      "title": "Toque Menor",
+      "icon": "🔔",
+      "text": "Um sino menor toca fora de hora. A multidao reage antes de entender o motivo.",
+      "type": "harmful",
+      "weight": 2,
+      "once": false,
+      "triggerNodes": [],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Manter a calma no empurra-empurra", "attrCheck": "constituicao", "difficulty": 6, "successText": "Voce fica de pe e ainda ajuda alguem a levantar.", "failText": "A multidao te prensa contra uma parede.", "successPoints": 2, "failVida": -1, "successGrantTags": ["ajudou_na_multidao"], "failGrantTags": [] },
+        { "text": "Identificar de qual torre veio o som", "attrCheck": "sabedoria", "difficulty": 6, "successText": "Nao foi o Sino-Mor. Foi um sinal combinado da Guilda.", "failText": "Os ecos se confundem.", "successPoints": 4, "successGrantTags": ["sinal_da_guilda"], "failGrantTags": [] }
+      ]
+    },
+    {
+      "id": "enc_porta_aberta",
+      "title": "Porta Aberta Demais",
+      "icon": "🚪",
+      "text": "Uma porta lateral que deveria estar trancada abre sozinha quando voce passa.",
+      "type": "neutral",
+      "weight": 1,
+      "once": true,
+      "triggerNodes": ["arquivo_externo", "templo_fechado", "torre_sino"],
+      "requireTags": [],
+      "excludeTags": [],
+      "grantTags": [],
+      "vida": 0,
+      "sanidade": 0,
+      "attrDeltas": {},
+      "points": 0,
+      "responses": [
+        { "text": "Entrar com cuidado", "attrCheck": "sabedoria", "difficulty": 6, "successText": "Nao e armadilha; e rota deixada por alguem que tambem quer a verdade fora de uma gaveta.", "failText": "Voce entra, mas derruba objetos e chama atencao.", "successPoints": 5, "failPoints": -1, "successGrantTags": ["rota_anonima"], "failGrantTags": ["fez_barulho"] },
+        { "text": "Ignorar a porta", "attrCheck": "", "difficulty": 5, "successText": "Algumas oportunidades tambem sao iscas. Voce segue inteiro.", "successPoints": 1, "successGrantTags": [] }
+      ]
+    }
+  ]
+}

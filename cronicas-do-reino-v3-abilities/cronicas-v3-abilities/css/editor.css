@@ -1,0 +1,401 @@
+  /* ── SCORE SYSTEM ── */
+  .score-hud {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-light);
+    padding: 0.25em 0.8em;
+    border: 1px solid rgba(201,162,39,0.4);
+    background: rgba(201,162,39,0.06);
+    white-space: nowrap;
+  }
+
+  .score-hud-icon { font-size: 0.9rem; }
+  .score-hud-val  { font-weight: 700; min-width: 2rem; text-align: right; }
+
+  /* Floating score popup */
+  .score-popup {
+    position: fixed;
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold-light);
+    text-shadow: 0 0 12px rgba(201,162,39,0.8);
+    pointer-events: none;
+    z-index: 9997;
+    animation: scoreFloat 1.4s ease forwards;
+    letter-spacing: 0.08em;
+  }
+
+  .score-popup.neg { color: #cc4444; text-shadow: 0 0 12px rgba(139,26,26,0.8); }
+
+  @keyframes scoreFloat {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    30%  { opacity: 1; transform: translateY(-18px) scale(1.15); }
+    100% { opacity: 0; transform: translateY(-55px) scale(0.9); }
+  }
+
+  /* Score breakdown in epilogue */
+  .score-breakdown {
+    border: 1px solid rgba(201,162,39,0.4);
+    background: linear-gradient(135deg, rgba(201,162,39,0.08), rgba(201,162,39,0.02));
+    padding: 1.8rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .score-total-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.4rem;
+  }
+
+  .score-total-value {
+    font-family: 'Cinzel', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow: 0 0 30px rgba(201,162,39,0.4);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .score-total-pts {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--stone-light);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+
+  .score-rank {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    padding: 0.35em 1.2em;
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    background: rgba(201,162,39,0.08);
+    margin-bottom: 1.2rem;
+  }
+
+  .score-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(201,162,39,0.15);
+    padding-top: 1rem;
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--stone-light);
+    padding: 0.2rem 0;
+  }
+
+  .score-row-val { color: var(--gold); font-weight: 700; }
+  .score-row-val.pos { color: #4a8; }
+  .score-row-val.neg { color: #cc4444; }
+
+  /* Editor point fields */
+  .points-badge-editor {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    padding: 0.2em 0.5em;
+    border: 1px solid rgba(201,162,39,0.3);
+    color: var(--gold);
+    background: rgba(201,162,39,0.05);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .points-badge-editor:hover { border-color: var(--gold); background: rgba(201,162,39,0.12); }
+
+  .points-mini-input {
+    width: 52px;
+    background: rgba(244,232,193,0.06);
+    border: 1px solid rgba(201,162,39,0.35);
+    color: var(--gold-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    padding: 0.25rem 0.4rem;
+    text-align: center;
+    outline: none;
+  }
+  .points-mini-input:focus { border-color: var(--gold); }
+
+  /* ── EPILOGUE SCREEN ── */
+  #screen-epilogue {
+    background: radial-gradient(ellipse at 50% 10%, #1a0f00 0%, #0d0a06 70%);
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+    overflow-y: auto;
+  }
+
+  .epilogue-container {
+    width: 100%;
+    max-width: 680px;
+    animation: fadeInUp 0.8s ease both;
+  }
+
+  .epilogue-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(201,162,39,0.25);
+  }
+
+  .epilogue-ornament {
+    font-size: 1.8rem;
+    color: var(--gold);
+    letter-spacing: 0.5em;
+    opacity: 0.6;
+    margin-bottom: 0.8rem;
+  }
+
+  .epilogue-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    color: var(--gold-light);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    text-shadow: 0 0 30px rgba(201,162,39,0.3);
+  }
+
+  .epilogue-char-name {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--parchment-dark);
+    opacity: 0.8;
+    margin-bottom: 0.2rem;
+  }
+
+  .epilogue-adventure-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--stone-light);
+    text-transform: uppercase;
+  }
+
+  /* Main ending card */
+  .epilogue-main-ending {
+    border: 1px solid rgba(201,162,39,0.5);
+    background: linear-gradient(135deg, rgba(201,162,39,0.07), rgba(201,162,39,0.02));
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .epilogue-main-ending::before {
+    content: '✦';
+    position: absolute;
+    top: 0.8rem; left: 1rem;
+    color: var(--gold); font-size: 0.7rem; opacity: 0.5;
+  }
+  .epilogue-main-ending::after {
+    content: '✦';
+    position: absolute;
+    bottom: 0.8rem; right: 1rem;
+    color: var(--gold); font-size: 0.7rem; opacity: 0.5;
+  }
+
+  .epilogue-section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .epilogue-section-label.main { color: var(--gold); }
+  .epilogue-section-label.sq { color: #9370db; }
+
+  .epilogue-ending-type {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .epilogue-ending-type.victory { color: var(--gold-light); }
+  .epilogue-ending-type.defeat  { color: #cc4444; }
+  .epilogue-ending-type.neutral { color: var(--stone-light); }
+
+  .epilogue-ending-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: var(--parchment);
+    margin-bottom: 0.8rem;
+    line-height: 1.3;
+  }
+
+  .epilogue-ending-scene {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--stone-light);
+  }
+
+  /* SQ endings list */
+  .epilogue-sqs-section {
+    margin-bottom: 2rem;
+  }
+
+  .epilogue-sq-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .epilogue-sq-header-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(147,112,219,0.2);
+  }
+
+  .epilogue-sq-card {
+    border: 1px solid rgba(147,112,219,0.25);
+    background: rgba(50,20,80,0.1);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    transition: border-color 0.2s;
+  }
+
+  .epilogue-sq-card:hover { border-color: rgba(147,112,219,0.5); }
+
+  .epilogue-sq-outcome-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    width: 2.5rem;
+    text-align: center;
+  }
+
+  .epilogue-sq-info { flex: 1; }
+
+  .epilogue-sq-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: #c8a8ff;
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.05em;
+  }
+
+  .epilogue-sq-ending-name {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--parchment-dark);
+    margin-bottom: 0.2rem;
+  }
+
+  .epilogue-sq-outcome-tag {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.15em 0.5em;
+    border: 1px solid;
+    display: inline-block;
+  }
+
+  .epilogue-sq-outcome-tag.victory { border-color: #9370db; color: #c8a8ff; }
+  .epilogue-sq-outcome-tag.defeat  { border-color: var(--blood); color: #cc4444; }
+  .epilogue-sq-outcome-tag.neutral { border-color: var(--stone); color: var(--stone-light); }
+  .epilogue-sq-outcome-tag.skipped { border-color: var(--stone); color: var(--stone); }
+
+  /* Skipped SQ (declined) */
+  .epilogue-sq-card.skipped { opacity: 0.45; }
+
+  /* Stats row */
+  .epilogue-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.5rem;
+    border: 1px solid rgba(201,162,39,0.15);
+    background: rgba(244,232,193,0.02);
+  }
+
+  .epilogue-stat-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+
+  .epilogue-stat-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    color: var(--gold-light);
+    display: block;
+  }
+
+  .epilogue-stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--stone-light);
+  }
+
+  /* Final attrs */
+  .epilogue-attrs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 1rem 1.5rem;
+    border: 1px solid rgba(201,162,39,0.1);
+  }
+
+  .epilogue-attr-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 0.3em 0.8em;
+    border: 1px solid rgba(201,162,39,0.2);
+    color: var(--stone-light);
+  }
+
+  .epilogue-attr-chip span:last-child { color: var(--gold-light); }
+
+  /* Scroll of deeds */
+  .epilogue-scroll {
+    border: 1px solid rgba(201,162,39,0.2);
+    background: rgba(244,232,193,0.03);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .epilogue-scroll-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
