@@ -291,48 +291,58 @@ function startCombat(nodeId) {
     return;
   }
 
-  // ── Determine player combat attributes from class (with fallbacks) ──
-  const playerAttackAttr  = character.primaryAttr  || 'forca';
-  const playerDamageAttr  = character.damageAttr   || playerAttackAttr;
-  const playerDodgeAttr   = character.dodgeAttr    || 'destreza';
-  const playerDefenseAttr = character.defenseAttr  || 'constituicao';
-  const ATTR_NAMES = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
-  const ATTR_ICONS = { forca:'⚔️', destreza:'🗡️', inteligencia:'📚', carisma:'🎶', sabedoria:'🏹', constituicao:'🛡️' };
+  OverlayManager.enqueue(() => {
+    // ── Determine player combat attributes from class (with fallbacks) ──
+    const playerAttackAttr  = character.primaryAttr  || 'forca';
+    const playerDamageAttr  = character.damageAttr   || playerAttackAttr;
+    const playerDodgeAttr   = character.dodgeAttr    || 'destreza';
+    const playerDefenseAttr = character.defenseAttr  || 'constituicao';
+    const ATTR_NAMES = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
+    const ATTR_ICONS = { forca:'⚔️', destreza:'🗡️', inteligencia:'📚', carisma:'🎶', sabedoria:'🏹', constituicao:'🛡️' };
 
-  combatState = {
-    round: 1,
-    playerDefending: false,
-    enemyVida: cfg.vidaMax || cfg.vida || 8,
-    enemyVidaMax: cfg.vidaMax || cfg.vida || 8,
-    cfg,
-    sourceNodeId: nodeId,
-    ended: false,
-    playerAttackAttr,    // ← acerto
-    playerDamageAttr,    // ← dano
-    playerDodgeAttr,     // ← esquiva
-    playerDefenseAttr,   // ← armadura
-    specialAction: cfg._specialAction || null,
-    // Ability runtime state: { [abilityId]: { cooldownLeft, usesLeft } }
-    abilityState: {},
-  };
-
-  // Init per-ability runtime state
-  (cfg.abilities || []).forEach(ab => {
-    combatState.abilityState[ab.id] = {
-      cooldownLeft: 0,
-      usesLeft: ab.maxUses > 0 ? ab.maxUses : Infinity,
+    combatState = {
+      round: 1,
+      playerDefending: false,
+      enemyVida: cfg.vidaMax || cfg.vida || 8,
+      enemyVidaMax: cfg.vidaMax || cfg.vida || 8,
+      cfg,
+      sourceNodeId: nodeId,
+      ended: false,
+      playerAttackAttr,    // ← acerto
+      playerDamageAttr,    // ← dano
+      playerDodgeAttr,     // ← esquiva
+      playerDefenseAttr,   // ← armadura
+      specialAction: cfg._specialAction || null,
+      abilityState: {},
     };
-  });
 
-  // Clear any leftover combat effects from previous fight
-  clearCombatEffects();
+    (cfg.abilities || []).forEach(ab => {
+      combatState.abilityState[ab.id] = {
+        cooldownLeft: 0,
+        usesLeft: ab.maxUses > 0 ? ab.maxUses : Infinity,
+      };
+    });
 
-  // Resetar vida de combate do jogador a cada novo combate
-  character.vidaCombate    = character.vidaCombateMax;
+    clearCombatEffects();
+    character.vidaCombate = character.vidaCombateMax;
 
-  // Show overlay
-  const overlay = document.getElementById('combat-overlay');
-  overlay.style.display = 'flex';
+    // ── Aplicar efeitos de arma pendentes (veneno/fogo/sangramento aplicado via consumível) ──
+    if (character._pendingWeaponEffects && character._pendingWeaponEffects.length) {
+      character._pendingWeaponEffects.forEach(weff => {
+        if (weff.type === 'weapon_poison') {
+          combatEffects.push({ type: 'poison', source: 'Veneno na Arma', value: weff.value, duration: weff.duration, turnsLeft: weff.duration });
+        } else if (weff.type === 'weapon_fire') {
+          combatEffects.push({ type: 'buff_self', attr: '_fireDmg', value: weff.value, source: 'Arma Flamejante', duration: weff.duration, turnsLeft: weff.duration });
+          combatState._fireDmgBonus = (combatState._fireDmgBonus || 0) + weff.value;
+        } else if (weff.type === 'weapon_bleed') {
+          combatEffects.push({ type: 'bleed', source: 'Arma Sangrenta', value: weff.value, duration: weff.duration, turnsLeft: weff.duration, stacks: 1 });
+        }
+      });
+      character._pendingWeaponEffects = [];
+      if (typeof renderCharHud === 'function') renderCharHud();
+    }
+
+    OverlayManager.setActive('combat-overlay');
 
   // Populate UI
   document.getElementById('combat-title').textContent = cfg.name || 'Combate';
@@ -415,9 +425,9 @@ function startCombat(nodeId) {
   updateCombatBars();
   updateCombatRound();
 
-  // ← FIX: garante que os botões estejam habilitados ao iniciar o combate
-  // (podem ter ficado disabled de um combate anterior)
-  setCombatActionsDisabled(false);
+    // ← FIX: garante que os botões estejam habilitados ao iniciar o combate
+    setCombatActionsDisabled(false);
+  });
 }
 
 function combatLog(msg, cls = '') {
@@ -999,9 +1009,9 @@ async function enemyTurn() {
   // Use player's class-defined dodge and defense attrs
   const pDodgeAttr   = combatState.playerDodgeAttr   || 'destreza';
   const pDefenseAttr = combatState.playerDefenseAttr || 'constituicao';
-  const pDodge   = character.attrs[pDodgeAttr]   || 1;
-  const pDefense = character.attrs[pDefenseAttr] || 1;
-  const pCon = character.attrs.constituicao || 1;
+  const pDodge   = getAttrTotal(pDodgeAttr)   + (character.combatStats.esquivaBonus || 0);
+  const pDefense = getAttrTotal(pDefenseAttr) + (character.combatStats.armadura || 0);
+  const pCon = getAttrTotal('constituicao') + (character.combatStats.esquivaBonus || 0);
   const hitBonus = isHeavy ? 1.2 : 1;
   const ATTR_NAMES_RT = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
   const { roll, chance, success } = await showCombatRoll(
@@ -1110,8 +1120,8 @@ async function combatAction(action) {
 
     const attackAttr = combatState.playerAttackAttr || 'forca';
     const damageAttr = combatState.playerDamageAttr || attackAttr;
-    const pAtk = character.attrs[attackAttr] || 1;
-    const pDmg = character.attrs[damageAttr] || 1;
+    const pAtk = getAttrTotal(attackAttr) + (character.combatStats.precisaoBonus || 0);
+    const pDmg = getAttrTotal(damageAttr) + (character.combatStats.danoBonus || 0);
     const eDestreza = ea.destreza || 2;
     const ATTR_NAMES2 = { forca:'Força', destreza:'Destreza', inteligencia:'Inteligência', carisma:'Carisma', sabedoria:'Sabedoria', constituicao:'Constituição' };
 
@@ -1289,7 +1299,19 @@ function endCombat(outcome) {
     rewardsEl.textContent = cfg.victoryText || 'O inimigo foi derrotado.';
     combatLog('✦ VITÓRIA! O inimigo foi derrotado.', 'result-win');
     if (cfg.xpReward) addScore(cfg.xpReward, 'choice', `Combate: ${cfg.name}`);
+    
+    // Support both old (ouroReward) and new (rewardGold) keys
+    const gold = cfg.rewardGold || cfg.ouroReward;
+    if (gold) changeOuro(gold);
+
+    // Support both old (itemRewards) and new (rewardItems) keys
+    const items = cfg.rewardItems || cfg.itemRewards;
+    if (items && items.length) {
+      items.forEach(itemId => giveItem(itemId));
+    }
+    
     if (cfg.victoryTagEffects) applyTagEffects(cfg.victoryTagEffects);
+    if (typeof renderCharHud === 'function') renderCharHud();
 
   } else if (outcome === 'lose') {
     resultEl.className = 'combat-end-result lose';
@@ -1312,7 +1334,7 @@ function endCombat(outcome) {
     // Se a penalidade zerou a vida da jornada, aciona morte — mas só após fechar o overlay
     if (character.vida <= 0) {
       setTimeout(() => {
-        document.getElementById('combat-overlay').style.display = 'none';
+        OverlayManager.closeActive('combat-overlay');
         combatState = null;
         triggerStatusDeath('vida');
       }, 1800);
@@ -1332,7 +1354,7 @@ function closeCombat() {
   const cfg = combatState.cfg;
   const outcome = combatState._outcome;
 
-  document.getElementById('combat-overlay').style.display = 'none';
+  OverlayManager.closeActive('combat-overlay');
 
   // Navigate to appropriate next scene
   let nextNode = null;

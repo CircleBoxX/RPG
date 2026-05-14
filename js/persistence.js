@@ -10,7 +10,9 @@ function renderAdventureGrid() {
   grid.innerHTML = '';
 
   adventures.forEach((adv, i) => {
-    const isBuiltin = adv.meta.id === 'builtin-1' || adv.meta.id === 'test-adventure';
+    // A built-in adventure is one that is NOT saved in localStorage (initially loaded from data.js)
+    // For simplicity, we keep a list of known hardcoded IDs or check if it's the new master-test
+    const isBuiltin = adv.meta.id === 'master-test' || adv.meta.id === 'builtin-1' || adv.meta.id === 'test-adventure';
     const card = document.createElement('div');
     card.className = 'adventure-card';
 
@@ -84,7 +86,7 @@ function editAdventure(i) {
 //  PERSISTENCE — localStorage
 // ═══════════════════════════════════════════════════════════
 const STORAGE_KEY = 'cronicas-aventuras-v1';
-const BUILTIN_IDS = ['builtin-1', 'test-adventure'];
+const BUILTIN_IDS = ['master-test', 'builtin-1', 'test-adventure'];
 
 function saveAdventures() {
   try {

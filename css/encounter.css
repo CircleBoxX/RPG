@@ -9,7 +9,9 @@
 .encounter-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.88);
+  background: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,11 +21,12 @@
   overflow-y: auto;
 }
 
-/* ── Box: sólido, sem transparência ── */
+/* ── Box ── */
 .encounter-box {
-  background: linear-gradient(160deg, #110e06 0%, #0d0a06 100%);
-  border: 1px solid rgba(232,164,74,0.45);
-  box-shadow: 0 0 60px rgba(232,164,74,0.12), inset 0 0 40px rgba(0,0,0,0.5);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gold-dark);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.6);
   max-width: 520px;
   width: 100%;
   padding: 2rem 2rem 1.8rem;
@@ -33,6 +36,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-radius: 4px;
 }
 
 /* ── Type badge ── */

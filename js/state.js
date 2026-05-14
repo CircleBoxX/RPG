@@ -34,6 +34,15 @@ let character = {
   abilityState: {},  // { [abId]: { cooldownLeft, usesLeft } }
   timedTags: [],     // [ { tag, scenesLeft, source, isCombatTurn? } ]
   _tempBuffs: [],    // [ { attrKey, value, scenesLeft, source } ]
+  ouro: 0,           // Dinheiro do personagem
+  inventario: [],    // Array de IDs de itens
+  equipamento: { arma: null, armadura: null, acessorio: null }, // IDs de itens equipados
+  combatStats: {     // Atributos secundários de combate baseados em equipamentos e bônus passivos
+    danoBonus: 0,
+    precisaoBonus: 0,
+    armadura: 0,
+    esquivaBonus: 0
+  }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -144,6 +153,7 @@ let pendingAdventure = null; // adventure waiting for character creation
 let editorAdventure = {
   meta: { id: genId(), title: "Minha Aventura", author: "", desc: "", genre: "Fantasia Medieval", icon: "⚔️", startNode: "" },
   nodes: {},
-  combats: {}
+  combats: {},
+  items: {}
 };
 let selectedNodeId = null;

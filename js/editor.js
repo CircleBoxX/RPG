@@ -595,6 +595,25 @@ function renderNodeEditor(nodeId) {
               onchange="updateChoice('${nodeId}',${i},'sanidadeFail',+this.value)" style="border-color:rgba(204,100,68,0.4);">
           </div>` : ''}
         </div>
+        <!-- ── Ouro e Itens ── -->
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;color:var(--gold);text-transform:uppercase;min-width:3rem;">🪙 Ouro</span>
+          <div style="display:flex;align-items:center;gap:0.3rem;">
+            <span style="font-size:0.6rem;color:var(--stone-light);">Recebe/Perde:</span>
+            <input class="points-mini-input" type="number" value="${c.ouro||0}" min="-9999" max="9999"
+              title="Altera o ouro (negativo pode exigir pagamento, positivo é ganho)"
+              onchange="updateChoice('${nodeId}',${i},'ouro',+this.value)" style="border-color:rgba(201,162,39,0.4);">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-top:0.2rem;">
+          <span style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;color:var(--gold-light);text-transform:uppercase;min-width:3rem;">🎒 Itens</span>
+          <div style="display:flex;align-items:center;gap:0.3rem;flex:1;">
+            <span style="font-size:0.6rem;color:var(--stone-light);">Dar Itens (ID):</span>
+            <input class="field-input" style="font-size:0.62rem;flex:1;" placeholder="Ex: item_1, item_2"
+              value="${escHtml((c.itemRewards||[]).join(', '))}"
+              onchange="updateChoiceItemRewards('${nodeId}',${i},this.value)">
+          </div>
+        </div>
       </div>
       <!-- ── Tags desta Escolha ── -->
       <div style="border-top:1px dashed rgba(180,120,220,0.2);padding-top:0.5rem;margin-top:0.3rem;">
@@ -706,6 +725,13 @@ function updateChoice(nodeId, idx, key, value) {
     delete editorAdventure.nodes[nodeId].choices[idx].difficulty;
   }
   if (key === 'attrCheck') renderNodeEditor(nodeId);
+}
+
+function updateChoiceItemRewards(nodeId, idx, value) {
+  const choice = editorAdventure.nodes[nodeId].choices[idx];
+  if (!choice) return;
+  const items = value.split(',').map(i => i.trim()).filter(Boolean);
+  choice.itemRewards = items;
 }
 
 function addChoice(nodeId) {

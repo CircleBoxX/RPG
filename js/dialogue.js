@@ -22,17 +22,17 @@ function startDialogue(node, afterCallback) {
     return;
   }
 
-  dlgState = {
-    lines: node.dialogues,
-    idx: 0,
-    typing: false,
-    fullText: '',
-    afterCallback,
-  };
-
-  const overlay = document.getElementById('dialogue-overlay');
-  overlay.style.display = 'flex';
-  _dlgShowLine(0);
+  OverlayManager.enqueue(() => {
+    dlgState = {
+      lines: node.dialogues,
+      idx: 0,
+      typing: false,
+      fullText: '',
+      afterCallback,
+    };
+    OverlayManager.setActive('dialogue-overlay');
+    _dlgShowLine(0);
+  });
 }
 
 // Show a specific dialogue line
@@ -136,7 +136,7 @@ function dialogueAdvance() {
 
 function _dlgClose() {
   if (dlgTypingTimer) { clearInterval(dlgTypingTimer); dlgTypingTimer = null; }
-  document.getElementById('dialogue-overlay').style.display = 'none';
+  OverlayManager.closeActive('dialogue-overlay');
   const cb = dlgState?.afterCallback;
   dlgState = null;
   if (cb) cb();

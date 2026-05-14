@@ -204,39 +204,41 @@ function doAttrRollSq(choice) {
   const success = roll <= chance;
   const nextNode = success ? choice.next : (choice.nextFail || choice.next);
 
-  const overlay = document.getElementById('roll-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('roll-attr-name').textContent =
-    `Teste de ${attrInfo?.name||attrKey} (${attrVal}) · Dificuldade ${difficulty}`;
-  document.getElementById('roll-choice-text').textContent = choice.text;
-  document.getElementById('roll-dice').textContent = '🎲';
-  document.getElementById('roll-number').style.color = 'var(--gold)';
+  OverlayManager.enqueue(() => {
+    document.getElementById('roll-attr-name').textContent =
+      `Teste de ${attrInfo?.name||attrKey} (${attrVal}) · Dificuldade ${difficulty}`;
+    document.getElementById('roll-choice-text').textContent = choice.text;
+    document.getElementById('roll-dice').textContent = '🎲';
+    document.getElementById('roll-number').style.color = 'var(--gold)';
 
-  let frame = 0;
-  const anim = setInterval(() => {
-    document.getElementById('roll-number').textContent = Math.floor(Math.random()*100)+1;
-    frame++;
-    if (frame >= 12) {
-      clearInterval(anim);
-      document.getElementById('roll-number').textContent = roll;
-      document.getElementById('roll-number').style.color = success ? '#4a8' : '#cc4444';
-      document.getElementById('roll-vs').textContent = `Precisava ≤ ${chance} para ter sucesso`;
-      const resultEl = document.getElementById('roll-result');
-      resultEl.className = 'roll-result ' + (success ? 'success' : 'failure');
-      resultEl.textContent = success ? '✦ SUCESSO ✦' : '✦ FALHOU ✦';
-    }
-  }, 60);
+    OverlayManager.setActive('roll-overlay');
 
-  document.getElementById('roll-continue-btn').onclick = () => {
-    overlay.style.display = 'none';
-    if (success && choice.pointsSuccess) addScore(choice.pointsSuccess, 'roll', `◈ Sucesso: ${choice.text.substring(0,30)}`);
-    if (!success && choice.pointsFail)   addScore(choice.pointsFail,   'roll', `◈ Falha: ${choice.text.substring(0,30)}`);
-    if (nextNode && activeSidequest?.nodes?.[nextNode]) {
-      renderSqScene(nextNode);
-    } else {
-      endSidequest(success);
-    }
-  };
+    let frame = 0;
+    const anim = setInterval(() => {
+      document.getElementById('roll-number').textContent = Math.floor(Math.random()*100)+1;
+      frame++;
+      if (frame >= 12) {
+        clearInterval(anim);
+        document.getElementById('roll-number').textContent = roll;
+        document.getElementById('roll-number').style.color = success ? '#4a8' : '#cc4444';
+        document.getElementById('roll-vs').textContent = `Precisava ≤ ${chance} para ter sucesso`;
+        const resultEl = document.getElementById('roll-result');
+        resultEl.className = 'roll-result ' + (success ? 'success' : 'failure');
+        resultEl.textContent = success ? '✦ SUCESSO ✦' : '✦ FALHOU ✦';
+      }
+    }, 60);
+
+    document.getElementById('roll-continue-btn').onclick = () => {
+      OverlayManager.closeActive('roll-overlay');
+      if (success && choice.pointsSuccess) addScore(choice.pointsSuccess, 'roll', `◈ Sucesso: ${choice.text.substring(0,30)}`);
+      if (!success && choice.pointsFail)   addScore(choice.pointsFail,   'roll', `◈ Falha: ${choice.text.substring(0,30)}`);
+      if (nextNode && activeSidequest?.nodes?.[nextNode]) {
+        renderSqScene(nextNode);
+      } else {
+        endSidequest(success);
+      }
+    };
+  });
 }
 
 function endSidequest(success) {
@@ -346,19 +348,21 @@ function endSidequest(success) {
     }
   }
 
-  overlay.style.display = 'flex';
+  OverlayManager.enqueue(() => {
+    OverlayManager.setActive('sq-result-overlay');
 
-  document.getElementById('sq-result-continue-btn').onclick = () => {
-    overlay.style.display = 'none';
-    const badge = document.getElementById('sq-hud-badge');
-    if (badge) badge.remove();
-    renderCharHud();
-    // Return to main story
-    if (sqReturnNodeId) {
-      renderScene(sqReturnNodeId);
-    }
-    sqReturnNodeId = null;
-  };
+    document.getElementById('sq-result-continue-btn').onclick = () => {
+      OverlayManager.closeActive('sq-result-overlay');
+      const badge = document.getElementById('sq-hud-badge');
+      if (badge) badge.remove();
+      renderCharHud();
+      // Return to main story
+      if (sqReturnNodeId) {
+        renderScene(sqReturnNodeId);
+      }
+      sqReturnNodeId = null;
+    };
+  });
 }
 
 // ── SIDEQUEST EDITOR ──

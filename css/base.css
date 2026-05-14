@@ -1,16 +1,18 @@
 :root {
-    --parchment: #f4e8c1;
-    --parchment-dark: #e8d5a3;
-    --ink: #1a0f00;
-    --ink-light: #3d2b1f;
-    --blood: #8b1a1a;
-    --gold: #c9a227;
-    --gold-light: #f0c040;
-    --stone: #5a5040;
-    --stone-light: #7a6a5a;
-    --shadow: rgba(0,0,0,0.7);
+    --parchment: #eaddc5;
+    --parchment-dark: #d4c29c;
+    --ink: #110a04;
+    --ink-light: #2b1f15;
+    --blood: #9a1a1a;
+    --gold: #d4af37;
+    --gold-light: #ffdf73;
+    --gold-dark: #8c7322;
+    --stone: #4a4235;
+    --stone-light: #6a5a4a;
+    --shadow: rgba(0,0,0,0.85);
+    --glass-bg: rgba(15, 12, 8, 0.75);
   }
-
+  
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
@@ -109,42 +111,49 @@
     letter-spacing: 0.15em;
     text-transform: uppercase;
     padding: 0.9em 2.5em;
-    border: 2px solid var(--gold);
-    background: transparent;
+    border: 1px solid var(--gold-dark);
+    background: linear-gradient(180deg, rgba(201,162,39,0.15) 0%, rgba(0,0,0,0.6) 100%);
     color: var(--gold-light);
     cursor: pointer;
     position: relative;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     min-width: 260px;
     clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
   }
 
   .btn-medieval:hover {
-    background: var(--gold);
-    color: var(--ink);
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(201,162,39,0.4);
+    background: linear-gradient(180deg, rgba(201,162,39,0.25) 0%, rgba(201,162,39,0.05) 100%);
+    border-color: var(--gold);
+    color: #fff;
+    transform: translateY(-2px) scale(1.02);
+    filter: drop-shadow(0 4px 12px rgba(201,162,39,0.3));
   }
 
   .btn-medieval.secondary {
-    border-color: var(--stone-light);
+    border-color: var(--stone);
     color: var(--stone-light);
+    background: linear-gradient(180deg, rgba(90,80,64,0.1) 0%, rgba(0,0,0,0.6) 100%);
     font-size: 0.85rem;
   }
 
   .btn-medieval.secondary:hover {
-    background: var(--stone-light);
+    border-color: var(--stone-light);
     color: var(--parchment);
+    filter: drop-shadow(0 4px 12px rgba(122,106,90,0.3));
   }
 
   .btn-medieval.danger {
-    border-color: var(--blood);
+    border-color: #6a1a1a;
     color: #cc4444;
+    background: linear-gradient(180deg, rgba(139,26,26,0.15) 0%, rgba(0,0,0,0.6) 100%);
   }
 
   .btn-medieval.danger:hover {
-    background: var(--blood);
-    color: var(--parchment);
+    border-color: var(--blood);
+    color: #ffaaaa;
+    filter: drop-shadow(0 4px 12px rgba(139,26,26,0.4));
   }
 
   /* ── ADVENTURE SELECT ── */
@@ -182,28 +191,34 @@
   }
 
   .adventure-card {
-    border: 1px solid rgba(201,162,39,0.3);
-    background: linear-gradient(135deg, rgba(26,15,0,0.9), rgba(13,10,6,0.9));
+    border: 1px solid var(--gold-dark);
+    background: linear-gradient(135deg, rgba(20,15,10,0.95), rgba(10,8,5,0.95));
+    backdrop-filter: blur(8px);
     padding: 1.8rem;
     cursor: default;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
   }
 
   .adventure-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(201,162,39,0.05), transparent);
+    background: linear-gradient(135deg, rgba(212,175,55,0.08), transparent);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.4s;
     pointer-events: none;
   }
 
-  .adventure-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  .adventure-card:hover { 
+    border-color: var(--gold); 
+    transform: translateY(-6px); 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 15px rgba(212,175,55,0.2); 
+  }
   .adventure-card:hover::before { opacity: 1; }
 
   .card-icon { font-size: 2.5rem; margin-bottom: 1rem; }
@@ -320,10 +335,14 @@
 
   /* Story card */
   .story-card {
-    background: linear-gradient(180deg, rgba(244,232,193,0.08) 0%, rgba(244,232,193,0.04) 100%);
-    border: 1px solid rgba(201,162,39,0.25);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--gold-dark);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.6);
     padding: 2.5rem;
     position: relative;
+    border-radius: 4px;
   }
 
   .story-card::before, .story-card::after {

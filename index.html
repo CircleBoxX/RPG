@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="css/dialogue.css">
 <link rel="stylesheet" href="css/encounter.css">
 <link rel="stylesheet" href="css/abilities.css">
+<link rel="stylesheet" href="css/sidebar.css">
 </head>
 <body>
 
@@ -190,14 +191,63 @@
           <span style="font-size:0.6rem;color:var(--stone-light);letter-spacing:0.15em;">PTS</span>
         </div>
         <span class="game-stats" id="game-stats">Cena 1</span>
+        <button class="btn-medieval secondary" style="padding:0.3em 0.8em; min-width:auto; font-size:1rem;" onclick="toggleCharSidebar()" title="Ver Ficha de Personagem">👤</button>
       </div>
     </div>
 
-    <!-- Character HUD -->
-    <div class="char-hud" id="char-hud" style="display:none;"></div>
-    <!-- Tags HUD -->
-    <div id="tags-hud" style="display:none;flex-wrap:wrap;gap:0.3rem;padding:0.3rem 1rem 0;"></div>
-    <div id="abilities-hud" style="display:none;padding:0.3rem 1rem 0;"></div>
+    <!-- Lateral Sidebar (Character Sheet) -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleCharSidebar()"></div>
+    <div id="sidebar-char" class="sidebar-char">
+      <div class="sidebar-header">
+         <span class="sidebar-title">Ficha de Personagem</span>
+         <button class="sidebar-close" onclick="toggleCharSidebar()">×</button>
+      </div>
+      <div class="sidebar-content">
+        <!-- Ouro -->
+        <div class="char-hud-attr" style="justify-content:center; gap:0.5rem; margin-bottom:1rem; padding:0.6rem; border-color:var(--gold);">
+           <span style="font-size:1.2rem;">🪙</span>
+           <span style="font-family:'Cinzel',serif; color:var(--gold); font-size:1rem; font-weight:bold;" id="char-ouro-hud">0</span>
+           <span style="color:var(--stone); font-size:0.7rem; letter-spacing:0.1em;">OURO</span>
+        </div>
+        
+        <!-- Character HUD -->
+        <div class="char-hud" id="char-hud" style="display:none;"></div>
+        
+        <!-- Equipamentos -->
+        <div style="margin-top:1.5rem; border-top:1px solid rgba(201,162,39,0.15); padding-top:1rem;">
+           <div style="font-family:'Cinzel',serif; font-size:0.7rem; color:var(--stone-light); letter-spacing:0.15em; margin-bottom:0.8rem; text-align:center;">⚔️ Equipamento</div>
+           <div id="equipment-hud" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
+        </div>
+
+        <!-- Bônus de Combate -->
+        <div id="combat-stats-hud" style="margin-top:1rem; display:none; background:rgba(201,162,39,0.04); border:1px solid rgba(201,162,39,0.12); padding:0.6rem 0.8rem;">
+          <div style="font-size:0.6rem; color:var(--stone); letter-spacing:0.1em; margin-bottom:0.4rem; text-transform:uppercase;">Bônus de Combate</div>
+          <div id="combat-stats-inner" style="display:flex; flex-wrap:wrap; gap:0.3rem 0.8rem; font-size:0.75rem;"></div>
+        </div>
+
+        <!-- Efeitos de Arma Pendentes -->
+        <div id="weapon-effects-hud" style="margin-top:0.6rem; display:none; background:rgba(255,80,80,0.04); border:1px solid rgba(255,120,120,0.18); padding:0.5rem 0.8rem;">
+        </div>
+
+        <!-- Inventário -->
+        <div style="margin-top:1.5rem; border-top:1px solid rgba(201,162,39,0.15); padding-top:1rem;">
+           <div style="font-family:'Cinzel',serif; font-size:0.7rem; color:var(--stone-light); letter-spacing:0.15em; margin-bottom:0.8rem; text-align:center;">🎒 Inventário</div>
+           <div id="inventory-hud" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
+        </div>
+
+        <!-- Tags HUD -->
+        <div style="margin-top:1.5rem; border-top:1px solid rgba(201,162,39,0.15); padding-top:1rem;">
+          <div style="font-family:'Cinzel',serif; font-size:0.7rem; color:var(--stone-light); letter-spacing:0.15em; margin-bottom:0.8rem; text-align:center;">Tags & Condições</div>
+          <div id="tags-hud" style="display:none;flex-direction:column;gap:0.4rem;"></div>
+        </div>
+        
+        <!-- Abilities HUD -->
+        <div style="margin-top:1.5rem; border-top:1px solid rgba(201,162,39,0.15); padding-top:1rem;">
+          <div style="font-family:'Cinzel',serif; font-size:0.7rem; color:var(--stone-light); letter-spacing:0.15em; margin-bottom:0.8rem; text-align:center;">Habilidades Ativas</div>
+          <div id="abilities-hud" style="display:none;padding:0;"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="story-card" id="story-card">
       <!-- BG position slot -->
@@ -240,6 +290,7 @@
         <button class="btn-sm" style="border-color:#9370db;color:#c8a8ff;" onclick="openSqEditor()">◈ Sidequests</button>
         <button class="btn-sm" style="border-color:#e8a44a;color:#f0c070;" onclick="openEncounterEditor()">🎲 Encontros</button>
         <button class="btn-sm" style="border-color:#80c8a0;color:#80c8a0;" onclick="openAbilityEditor()">✦ Habilidades</button>
+        <button class="btn-sm" style="border-color:var(--gold);color:var(--gold);" onclick="showItemEditor()">🎒 Itens</button>
         <button class="btn-sm" style="border-color:#cc4444;color:#e07070;" onclick="openCombatEditor()">⚔ Combates</button>
         <button class="btn-sm" onclick="saveAdventureFromEditor()">💾 Salvar</button>
         <button class="btn-sm" onclick="exportAdventure()">↓ Exportar JSON</button>
@@ -673,6 +724,8 @@
 <script src="js/score.js"></script>
 <script src="js/dialogue.js"></script>
 <script src="js/combat_runtime.js"></script>
+<script src="js/items.js"></script>
+<script src="js/item_editor.js"></script>
 <script src="js/combat_editor.js"></script>
 <script src="js/sidequests.js"></script>
 <script src="js/encounters.js"></script>

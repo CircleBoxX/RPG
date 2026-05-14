@@ -2,6 +2,52 @@
 //  UTILS — escHtml, genId, notify, showScreen, pixel art
 // ═══════════════════════════════════════════════════════════
 
+// ── OVERLAY MANAGER ──
+// Prevents overlays (dialogue, combat, encounters, rolls) from overlapping
+const OverlayManager = {
+  queue: [],
+  activeOverlay: null,
+  
+  enqueue: function(openFn) {
+    this.queue.push(openFn);
+    this.checkQueue();
+  },
+  
+  checkQueue: function() {
+    if (this.activeOverlay || this.queue.length === 0) return;
+    const nextFn = this.queue.shift();
+    nextFn();
+  },
+  
+  setActive: function(overlayId) {
+    this.activeOverlay = overlayId;
+    const el = document.getElementById(overlayId);
+    if (el) el.style.display = 'flex';
+  },
+  
+  closeActive: function(overlayId) {
+    if (this.activeOverlay === overlayId) {
+      const el = document.getElementById(overlayId);
+      if (el) el.style.display = 'none';
+      this.activeOverlay = null;
+      setTimeout(() => this.checkQueue(), 150);
+    }
+  },
+  
+  forceCloseAll: function() {
+    const overlays = ['dialogue-overlay', 'combat-overlay', 'sq-result-overlay', 'encounter-overlay', 'roll-overlay', 'death-overlay'];
+    overlays.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (id === 'death-overlay') el.remove();
+        else el.style.display = 'none';
+      }
+    });
+    this.activeOverlay = null;
+    this.queue = [];
+  }
+};
+
 function escHtmlRuntime(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

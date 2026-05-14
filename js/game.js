@@ -13,10 +13,7 @@ function startAdventure(adv) {
 function restartCurrentAdventure() {
   if (!currentAdventure) return;
   // Limpa overlays que possam ter ficado abertos
-  const deathOverlay = document.getElementById('death-overlay');
-  if (deathOverlay) deathOverlay.remove();
-  const combatOverlay = document.getElementById('combat-overlay');
-  if (combatOverlay) combatOverlay.style.display = 'none';
+  OverlayManager.forceCloseAll();
   combatState = null;
   currentNodeId = currentAdventure.meta.startNode;
   sceneCount = 0;
@@ -26,6 +23,11 @@ function restartCurrentAdventure() {
   character.abilityState = {};
   character.timedTags = [];
   character._tempBuffs = [];
+  character.ouro = 0;
+  character.inventario = [];
+  character.equipamento = { arma: null, armadura: null, acessorio: null };
+  character.combatStats = { danoBonus: 0, precisaoBonus: 0, armadura: 0, esquivaBonus: 0 };
+  character._pendingWeaponEffects = [];
   // Re-apply passive abilities from class
   if (typeof applyPassiveAbilities === 'function') applyPassiveAbilities();
   // Reset SQ completion flags
@@ -85,6 +87,11 @@ function confirmCharAndStart() {
   sceneCount = 0;
   history = [];
   epilogueLog = { mainEnding: null, sqResults: [], totalChoices: 0, sqCompleted: 0 };
+  character.ouro = 0;
+  character.inventario = [];
+  character.equipamento = { arma: null, armadura: null, acessorio: null };
+  character.combatStats = { danoBonus: 0, precisaoBonus: 0, armadura: 0, esquivaBonus: 0 };
+  character._pendingWeaponEffects = [];
   resetScore();
   showScreen('screen-game');
   document.getElementById('game-title-bar').textContent = currentAdventure.meta.title;
@@ -94,39 +101,48 @@ function confirmCharAndStart() {
   renderScene(currentNodeId);
 }
 
+function toggleCharSidebar() {
+  const sidebar = document.getElementById('sidebar-char');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (sidebar && backdrop) {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('open');
+  }
+}
+
 function renderCharHud() {
   const hud = document.getElementById('char-hud');
   if (!hud) return;
   if (!character.name) { hud.style.display = 'none'; return; }
+  // We use inline block here, but CSS !important will override it when open
   hud.style.display = 'flex';
-  hud.style.flexWrap = 'wrap';
-  hud.style.gap = '0.5rem';
 
   const vidaPct    = Math.round((character.vida    / character.vidaMax)    * 100);
   const sanPct     = Math.round((character.sanidade / character.sanidadeMax) * 100);
   const barStyle   = (pct, color) =>
-    `<div style="width:48px;height:4px;background:rgba(255,255,255,0.1);border-radius:0;overflow:hidden;margin-top:2px;">` +
+    `<div style="width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:0;overflow:hidden;margin-top:4px;">` +
     `<div style="width:${pct}%;height:100%;background:${color};transition:width 0.4s;"></div></div>`;
 
   const statusHtml =
-    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Vida da jornada — escassa, persiste entre combates">` +
-      `<div style="display:flex;align-items:center;gap:0.25rem;">` +
-        `<span>❤️</span><span style="font-size:0.65rem;color:#e06060;">VID</span>` +
+    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Vida">` +
+      `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;">` +
+        `<div><span>❤️</span><span style="font-size:0.65rem;color:#e06060;margin-left:0.2rem;">VID</span></div>` +
         `<span style="color:#ff8888;font-weight:700;">${character.vida}/${character.vidaMax}</span>` +
       `</div>${barStyle(vidaPct, '#cc4444')}` +
     `</div>` +
-    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Sanidade da jornada — escassa, persiste entre combates">` +
-      `<div style="display:flex;align-items:center;gap:0.25rem;">` +
-        `<span>🧠</span><span style="font-size:0.65rem;color:#9370db;">SAN</span>` +
+    `<div class="char-hud-attr" style="flex-direction:column;align-items:flex-start;gap:0;" title="Sanidade">` +
+      `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;">` +
+        `<div><span>🧠</span><span style="font-size:0.65rem;color:#9370db;margin-left:0.2rem;">SAN</span></div>` +
         `<span style="color:#c8a8ff;font-weight:700;">${character.sanidade}/${character.sanidadeMax}</span>` +
       `</div>${barStyle(sanPct, '#9370db')}` +
     `</div>`;
 
   hud.innerHTML =
-    `<span style="color:var(--gold-light);font-family:'Cinzel',serif;font-size:0.75rem;margin-right:0.3rem;">${character.name}</span>` +
-    ATTRS.map(a => `<div class="char-hud-attr">${a.icon} <span>${a.name.substring(0,3).toUpperCase()}</span><span>${character.attrs[a.key]}</span></div>`).join('') +
-    statusHtml;
+    `<span>${character.name}</span>` +
+    statusHtml +
+    ATTRS.map(a => `<div class="char-hud-attr"><div>${a.icon} <span>${a.name}</span></div><span>${character.attrs[a.key]}</span></div>`).join('');
   renderTagsHud();
+  if (typeof renderInventoryHud === 'function') renderInventoryHud();
 }
 
 // Modifica vida ou sanidade do personagem (+/- delta), atualiza o HUD e verifica morte/loucura
@@ -152,29 +168,27 @@ function triggerStatusDeath(tipo) {
     epilogueLog.mainEnding = { type: 'defeat', title, sceneName };
   }
 
-  // Mostra overlay dramático antes de ir ao epílogo
-  // Remove overlay anterior se existir (evita sobreposição)
-  const overlayAntigo = document.getElementById('death-overlay');
-  if (overlayAntigo) overlayAntigo.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'death-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:2000;animation:fadeIn 0.4s ease;';
-  overlay.innerHTML = `
-    <div style="text-align:center;max-width:380px;padding:2.5rem;border:1px solid ${isVida ? '#8b1a1a' : '#4a2080'};">
-      <div style="font-size:3rem;margin-bottom:1rem;">${isVida ? '💀' : '🌀'}</div>
-      <div style="font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:${isVida ? '#cc4444' : '#9370db'};text-transform:uppercase;margin-bottom:0.6rem;">
-        ${isVida ? '✦ DERROTA ✦' : '✦ LOUCURA ✦'}
-      </div>
-      <div style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--parchment);margin-bottom:1.5rem;line-height:1.3;">
-        ${title}
-      </div>
-      <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone-light);font-size:0.95rem;margin-bottom:2rem;">
-        ${isVida ? 'Seus ferimentos foram graves demais. A jornada termina aqui.' : 'A escuridão consumiu sua mente. Não há mais retorno da loucura.'}
-      </div>
-      <button class="btn-medieval danger" onclick="const o=document.getElementById('death-overlay');if(o)o.remove(); showEpilogue();">📜 Ver Epílogo</button>
-    </div>`;
-  document.body.appendChild(overlay);
+  OverlayManager.enqueue(() => {
+    const overlay = document.createElement('div');
+    overlay.id = 'death-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:var(--shadow);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:2000;animation:fadeIn 0.4s ease;';
+    overlay.innerHTML = `
+      <div style="text-align:center;max-width:380px;padding:2.5rem;background:var(--glass-bg);backdrop-filter:blur(10px);box-shadow:0 15px 40px rgba(0,0,0,0.8),inset 0 0 20px rgba(139,26,26,0.15);border:1px solid ${isVida ? 'rgba(139,26,26,0.8)' : 'rgba(74,32,128,0.8)'};border-radius:4px;">
+        <div style="font-size:3rem;margin-bottom:1rem;">${isVida ? '💀' : '🌀'}</div>
+        <div style="font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:${isVida ? '#cc4444' : '#9370db'};text-transform:uppercase;margin-bottom:0.6rem;">
+          ${isVida ? '✦ DERROTA ✦' : '✦ LOUCURA ✦'}
+        </div>
+        <div style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--parchment);margin-bottom:1.5rem;line-height:1.3;">
+          ${title}
+        </div>
+        <div style="font-family:'IM Fell English',serif;font-style:italic;color:var(--stone-light);font-size:0.95rem;margin-bottom:2rem;">
+          ${isVida ? 'Seus ferimentos foram graves demais. A jornada termina aqui.' : 'A escuridão consumiu sua mente. Não há mais retorno da loucura.'}
+        </div>
+        <button class="btn-medieval danger" onclick="OverlayManager.closeActive('death-overlay'); showEpilogue();">📜 Ver Epílogo</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    OverlayManager.setActive('death-overlay');
+  });
 }
 
 function renderScene(nodeId) {
@@ -198,6 +212,16 @@ function renderScene(nodeId) {
 
     // Scene pixel art image (async, non-blocking)
     renderSceneImage(node);
+
+    // ─── Process Node Rewards (Gold / Items) ───
+    if (node.rewardGold) {
+      changeOuro(node.rewardGold);
+      delete node.rewardGold; // Only grant once per adventure session
+    }
+    if (node.rewardItems && node.rewardItems.length) {
+      node.rewardItems.forEach(itemId => giveItem(itemId));
+      delete node.rewardItems; // Only grant once
+    }
 
     // Choices — always reset the whole section first to avoid stale #choices-list
     const choicesSection = document.getElementById('choices-section');
@@ -278,8 +302,21 @@ function _renderSceneChoices(node, nodeId, choicesSection) {
           badge = `<span class="choice-attr-badge ${tier}">${attrInfo?.icon || ''} ${attrInfo?.name || c.attrCheck} · ${chance}%</span>`;
         }
 
-        btn.innerHTML = `<span class="choice-num">${String.fromCharCode(73 + i)}.</span><span>${c.text}${badge}</span>`;
+        // ── Gold cost badge ──
+        let costBadge = '';
+        if (c.goldCost) {
+          costBadge = `<span style="color:var(--gold); font-size:0.75rem; margin-left:0.5rem; border:1px solid var(--gold); padding:1px 4px; border-radius:3px;">🪙 ${c.goldCost}</span>`;
+        }
+
+        btn.innerHTML = `<span class="choice-num">${String.fromCharCode(73 + i)}.</span><span>${c.text}${badge}${costBadge}</span>`;
         btn.onclick = () => {
+          // Check gold cost
+          if (c.goldCost && character.ouro < c.goldCost) {
+            notify('🪙 Ouro insuficiente!');
+            return;
+          }
+          if (c.goldCost) changeOuro(-c.goldCost);
+
           history.push({ scene: node.title, choice: c.text });
           epilogueLog.totalChoices++;
           // Award base choice points
@@ -289,6 +326,12 @@ function _renderSceneChoices(node, nodeId, choicesSection) {
           // Apply vida/sanidade changes from the choice itself (before roll)
           if (c.vida)     changeVida(c.vida);
           if (c.sanidade) changeSanidade(c.sanidade);
+          
+          // Apply ouro and items
+          if (c.ouro) changeOuro(c.ouro);
+          if (c.itemRewards && c.itemRewards.length) {
+            c.itemRewards.forEach(itemId => giveItem(itemId));
+          }
           // Tag redirect overrides next
           const redirect = evalChoiceTagRedirect(c);
           if (redirect) {
@@ -496,47 +539,48 @@ function doAttrRoll(choice) {
   const nextNode = success ? choice.next : (choice.nextFail || choice.next);
 
   // Show overlay
-  const overlay = document.getElementById('roll-overlay');
-  overlay.style.display = 'flex';
+  OverlayManager.enqueue(() => {
+    document.getElementById('roll-attr-name').textContent =
+      `Teste de ${attrInfo?.name || attrKey} (${attrVal}) · Dificuldade ${difficulty}`;
+    document.getElementById('roll-choice-text').textContent = choice.text;
+    document.getElementById('roll-dice').textContent = '🎲';
+    document.getElementById('roll-number').style.color = 'var(--gold)';
 
-  document.getElementById('roll-attr-name').textContent =
-    `Teste de ${attrInfo?.name || attrKey} (${attrVal}) · Dificuldade ${difficulty}`;
-  document.getElementById('roll-choice-text').textContent = choice.text;
-  document.getElementById('roll-dice').textContent = '🎲';
-  document.getElementById('roll-number').style.color = 'var(--gold)';
+    OverlayManager.setActive('roll-overlay');
 
-  // Animate number
-  let frame = 0;
-  const anim = setInterval(() => {
-    document.getElementById('roll-number').textContent = Math.floor(Math.random() * 100) + 1;
-    frame++;
-    if (frame >= 12) {
-      clearInterval(anim);
-      document.getElementById('roll-number').textContent = roll;
-      document.getElementById('roll-number').style.color = success ? '#4a8' : '#cc4444';
-      document.getElementById('roll-vs').textContent = `Precisava ≤ ${chance} para ter sucesso`;
-      const resultEl = document.getElementById('roll-result');
-      resultEl.className = 'roll-result ' + (success ? 'success' : 'failure');
-      resultEl.textContent = success ? '✦ SUCESSO ✦' : '✦ FALHOU ✦';
-    }
-  }, 60);
+    // Animate number
+    let frame = 0;
+    const anim = setInterval(() => {
+      document.getElementById('roll-number').textContent = Math.floor(Math.random() * 100) + 1;
+      frame++;
+      if (frame >= 12) {
+        clearInterval(anim);
+        document.getElementById('roll-number').textContent = roll;
+        document.getElementById('roll-number').style.color = success ? '#4a8' : '#cc4444';
+        document.getElementById('roll-vs').textContent = `Precisava ≤ ${chance} para ter sucesso`;
+        const resultEl = document.getElementById('roll-result');
+        resultEl.className = 'roll-result ' + (success ? 'success' : 'failure');
+        resultEl.textContent = success ? '✦ SUCESSO ✦' : '✦ FALHOU ✦';
+      }
+    }, 60);
 
-  const btn = document.getElementById('roll-continue-btn');
-  btn.onclick = () => {
-    overlay.style.display = 'none';
-    // Award roll-specific points
-    if (success && choice.pointsSuccess) addScore(choice.pointsSuccess, 'roll', `Sucesso: ${choice.text.substring(0,30)}`);
-    if (!success && choice.pointsFail)   addScore(choice.pointsFail,   'roll', `Falha: ${choice.text.substring(0,30)}`);
-    // Apply vida/sanidade changes from roll result
-    if (success) {
-      if (choice.vidaSuccess)     changeVida(choice.vidaSuccess);
-      if (choice.sanidadeSuccess) changeSanidade(choice.sanidadeSuccess);
-    } else {
-      if (choice.vidaFail)        changeVida(choice.vidaFail);
-      if (choice.sanidadeFail)    changeSanidade(choice.sanidadeFail);
-    }
-    renderScene(nextNode);
-  };
+    const btn = document.getElementById('roll-continue-btn');
+    btn.onclick = () => {
+      OverlayManager.closeActive('roll-overlay');
+      // Award roll-specific points
+      if (success && choice.pointsSuccess) addScore(choice.pointsSuccess, 'roll', `Sucesso: ${choice.text.substring(0,30)}`);
+      if (!success && choice.pointsFail)   addScore(choice.pointsFail,   'roll', `Falha: ${choice.text.substring(0,30)}`);
+      // Apply vida/sanidade changes from roll result
+      if (success) {
+        if (choice.vidaSuccess)     changeVida(choice.vidaSuccess);
+        if (choice.sanidadeSuccess) changeSanidade(choice.sanidadeSuccess);
+      } else {
+        if (choice.vidaFail)        changeVida(choice.vidaFail);
+        if (choice.sanidadeFail)    changeSanidade(choice.sanidadeFail);
+      }
+      renderScene(nextNode);
+    };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════

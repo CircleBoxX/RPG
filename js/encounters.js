@@ -62,7 +62,8 @@ function checkEncounterTrigger(nodeId) {
 
 // Show the encounter overlay
 function triggerEncounter(enc, returnNodeId) {
-  activeEncounter = { enc, returnNodeId };
+  OverlayManager.enqueue(() => {
+    activeEncounter = { enc, returnNodeId };
 
   const overlay = document.getElementById('encounter-overlay');
   const badge = document.getElementById('enc-type-badge');
@@ -89,16 +90,17 @@ function triggerEncounter(enc, returnNodeId) {
   document.body.appendChild(flash);
   setTimeout(() => flash.remove(), 2500);
 
-  overlay.style.display = 'flex';
+    OverlayManager.setActive('encounter-overlay');
 
-  // ── If the encounter has response options, show them ──
-  const responses = enc.responses || [];
-  if (responses.length > 0) {
-    _showEncounterResponses(enc, responses);
-  } else {
-    // Legacy: no responses — show effects immediately and a continue button
-    _showEncounterEffectsAndContinue(enc, enc);
-  }
+    // ── If the encounter has response options, show them ──
+    const responses = enc.responses || [];
+    if (responses.length > 0) {
+      _showEncounterResponses(enc, responses);
+    } else {
+      // Legacy: no responses — show effects immediately and a continue button
+      _showEncounterEffectsAndContinue(enc, enc);
+    }
+  });
 }
 
 // Build and show encounter response choices
@@ -271,7 +273,7 @@ function _showEncounterEffectsAndContinue(enc, effectSrc) {
   const btn = document.getElementById('enc-continue-btn');
   btn.style.display = 'block';
   btn.onclick = () => {
-    document.getElementById('encounter-overlay').style.display = 'none';
+    OverlayManager.closeActive('encounter-overlay');
     _applyEncounterEffects(src);
   };
 }

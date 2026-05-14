@@ -221,8 +221,18 @@ function renderCombatDefEditor(cid) {
         <input class="field-input" type="number" min="1" max="999" value="${c.vidaMax||c.vida||30}" onchange="updateCombatDef('${cid}','vidaMax',+this.value);updateCombatDef('${cid}','vida',+this.value)">
       </div>
       <div class="field-group" style="margin:0;">
-        <label class="field-label" style="font-size:0.6rem;">⭐ Recompensa (pontos)</label>
+        <label class="field-label" style="font-size:0.6rem;">⭐ Recompensa (XP/pontos)</label>
         <input class="field-input" type="number" min="0" max="9999" value="${c.xpReward||0}" onchange="updateCombatDef('${cid}','xpReward',+this.value)">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+      <div class="field-group" style="margin:0;">
+        <label class="field-label" style="font-size:0.6rem;color:var(--gold);">🪙 Recompensa (Ouro)</label>
+        <input class="field-input" type="number" min="0" max="9999" value="${c.ouroReward||0}" onchange="updateCombatDef('${cid}','ouroReward',+this.value)">
+      </div>
+      <div class="field-group" style="margin:0;">
+        <label class="field-label" style="font-size:0.6rem;color:var(--gold-light);">🎒 Recompensa (Itens - IDs separados por vírgula)</label>
+        <input class="field-input" value="${escHtml((c.itemRewards||[]).join(', '))}" onchange="updateCombatDefItemRewards('${cid}',this.value)" placeholder="Ex: item_1, pocao_vida">
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
@@ -351,6 +361,13 @@ function renderCombatDefEditor(cid) {
 function updateCombatDef(cid, key, value) {
   const c = getCombatDefs()[cid];
   if (c) c[key] = value;
+}
+
+function updateCombatDefItemRewards(cid, value) {
+  const c = getCombatDefs()[cid];
+  if (!c) return;
+  const items = value.split(',').map(i => i.trim()).filter(Boolean);
+  c.itemRewards = items;
 }
 
 function updateCombatDefAttr(cid, attrKey, value) {
